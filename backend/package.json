@@ -2,9 +2,9 @@
   "scripts": {
     "build": "node generateGames.js && echo 'Build completed'",
     "start": "node server.js",
-    "vercel-build": "node ../generateGames.js",
-    "watch": "node ../watchGames.js",
-    "generate": "node ../generateGames.js"
+    "vercel-build": "node generateGames.js",
+    "watch": "node watchGames.js",
+    "generate": "node generateGames.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
