@@ -1,7 +1,7 @@
 const { Server } = require("socket.io");
 
-// Nếu deploy, nên dùng process.env.PORT hoặc fallback 3001
-const PORT = process.env.PORT || 3001;
+// Nếu deploy, nên dùng process.env.PORT hoặc fallback 3000
+const PORT = process.env.PORT || 3000;
 
 const io = new Server(PORT, {
   cors: {
