@@ -163,6 +163,27 @@
       navigator.clipboard.writeText(roomCode);
       alert("📋 Mã phòng đã được sao chép!");
     }
+
+    socket.on("game-started", async ({ host }) => {
+      const gameName = urlParams.get("game");
+
+      try {
+        const res = await fetch("/games.json");
+        const games = await res.json();
+        const selected = games.find(g => g.name === gameName);
+
+        if (selected) {
+          const folderId = selected.id;
+          window.location.href = `/game/${folderId}/index.html?code=${roomCode}&host=${host}`;
+        } else {
+          alert("⚠️ Không tìm thấy game tương ứng.");
+        }
+      } catch (err) {
+        console.error("Lỗi khi load game.json:", err);
+        alert("Không thể bắt đầu trò chơi.");
+      }
+    });
+
   </script>
 </body>
 </html>
