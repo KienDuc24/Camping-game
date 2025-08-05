@@ -6,65 +6,86 @@
   <title>Truth or Dare Game</title>
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
   <style>
-    body { font-family: sans-serif; text-align: center; margin: 0; padding: 30px; background: #f8f9fa; }
-    #status { margin-top: 20px; font-size: 1.2rem; }
-    button { padding: 12px 20px; margin: 20px auto; font-size: 1rem; display: none; }
+    body { font-family: sans-serif; text-align: center; margin: 0; padding: 20px; background: #f8f9fa; }
+    h1 { font-size: 1.8rem; margin-bottom: 10px; }
+    #status { font-size: 1.2rem; margin: 20px 0; }
+    button { padding: 10px 20px; font-size: 1rem; margin: 10px; border: none; border-radius: 8px; cursor: pointer; }
+    .start-btn { background: #28a745; color: white; }
+    .vote-btn { font-size: 2rem; padding: 12px; margin: 5px; }
   </style>
 </head>
 <body>
   <h1>🎲 Truth or Dare</h1>
   <p>Phòng: <span id="roomCode"></span></p>
   <div id="status">⏳ Đang chờ bắt đầu...</div>
-  <button id="startBtn" onclick="startRound()">🚀 Bắt đầu vòng</button>
+  <div id="actions"></div>
 
   <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const roomCode = urlParams.get('code');
+    const playerName = sessionStorage.getItem("playerName") || prompt("Tên của bạn?");
+    if (!playerName) window.location.href = "/";
+
+    sessionStorage.setItem("playerName", playerName);
+
+    document.getElementById('roomCode').innerText = roomCode;
+
     const socket = io("https://camping-game-production.up.railway.app", {
       transports: ["websocket"],
       secure: true
     });
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const roomCode = urlParams.get('code');
-    const playerName = sessionStorage.getItem("playerName");
-
-    document.getElementById("roomCode").textContent = roomCode;
-
-    // Khi kết nối, tham gia room Tod
     socket.emit("tod-join", { roomCode, player: playerName });
 
-    socket.on("tod-joined", ({ host }) => {
-      console.log("Bạn đã vào phòng Tod, host:", host);
+    socket.on("tod-joined", ({ host, players }) => {
       if (playerName === host) {
-        document.getElementById("startBtn").style.display = "inline-block";
+        const btn = document.createElement("button");
+        btn.className = "start-btn";
+        btn.textContent = "🚀 Bắt đầu trò chơi";
+        btn.onclick = () => socket.emit("tod-start", { roomCode });
+        document.getElementById("actions").appendChild(btn);
       }
+      document.getElementById("status").innerText = `Đang chờ ${players.length} người...`;
     });
 
-    function startRound() {
-      socket.emit("tod-start-round", { roomCode });
-    }
-
-    socket.on("tod-your-turn", ({ player }) => {
-      if (playerName === player) {
-        document.getElementById("status").innerHTML = "🫵 Bạn bị chọn! Hãy chọn: Truth hoặc Dare";
-        // TODO: thêm nút chọn Truth/Dare ở đây nếu muốn
+    socket.on("tod-chosen", chosen => {
+      document.getElementById("actions").innerHTML = "";
+      if (chosen === playerName) {
+        document.getElementById("status").innerHTML = `👉 Bạn bị chọn! Hãy chọn Truth hoặc Dare`;
+        const btnTruth = document.createElement("button");
+        btnTruth.textContent = "🤐 Truth";
+        btnTruth.onclick = () => socket.emit("tod-choice", { roomCode, player: playerName, choice: "truth" });
+        const btnDare = document.createElement("button");
+        btnDare.textContent = "😈 Dare";
+        btnDare.onclick = () => socket.emit("tod-choice", { roomCode, player: playerName, choice: "dare" });
+        document.getElementById("actions").append(btnTruth, btnDare);
       } else {
-        document.getElementById("status").innerHTML = `🤔 ${player} bị hỏi. Chờ câu hỏi...`;
+        document.getElementById("status").innerHTML = `👀 Đang chờ ${chosen} chọn Truth/Dare...`;
       }
     });
 
-    socket.on("tod-question", ({ question }) => {
-      document.getElementById("status").innerHTML = `❓ Câu hỏi: ${question} <br> Hãy vote: ✅/❌`;
-      // TODO: thêm nút vote V/X ở đây nếu muốn
+    socket.on("tod-question", ({ player, choice, question }) => {
+      document.getElementById("actions").innerHTML = "";
+      document.getElementById("status").innerHTML = `🗨️ ${player} chọn ${choice.toUpperCase()}<br>❓ Câu hỏi: ${question}`;
+
+      if (player !== playerName) {
+        const btnV = document.createElement("button");
+        btnV.className = "vote-btn";
+        btnV.textContent = "✅";
+        btnV.onclick = () => socket.emit("tod-vote", { roomCode, player: playerName, vote: true });
+        const btnX = document.createElement("button");
+        btnX.className = "vote-btn";
+        btnX.textContent = "❌";
+        btnX.onclick = () => socket.emit("tod-vote", { roomCode, player: playerName, vote: false });
+        document.getElementById("actions").append(btnV, btnX);
+      }
     });
 
-    socket.on("tod-waiting-votes", () => {
-      document.getElementById("status").innerHTML = "⏳ Đang chờ mọi người vote...";
-    });
-
-    socket.on("tod-vote-result", ({ continueGame }) => {
-      document.getElementById("status").innerHTML = continueGame
-        ? "👍 Hơn 70% đồng ý. Tiếp tục vòng mới!"
-        : "❌ Không đủ phiếu. Vòng kết thúc.";
+    socket.on("tod-voted", ({ player, vote }) => {
+      const actionEl = document.getElementById("actions");
+      const voteInfo = document.createElement("div");
+      voteInfo.textContent = `🗳️ ${player} đã vote ${vote ? "✅" : "❌"}`;
+      actionEl.appendChild(voteInfo);
     });
   </script>
 </body>
