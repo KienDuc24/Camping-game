@@ -2,115 +2,76 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Truth or Dare</title>
-  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Truth or Dare Game</title>
   <style>
-    body {
-      font-family: 'Poppins', sans-serif;
-      background: #f4f4f4;
-      text-align: center;
-      padding: 40px;
-    }
-    h1 { color: #333; }
-    #questionBox { margin: 20px 0; font-size: 1.2rem; }
-    button {
-      padding: 10px 20px;
-      margin: 10px;
-      font-size: 1rem;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-    .truth { background: #007bff; color: white; }
-    .dare { background: #28a745; color: white; }
-    .vote { background: #ffc107; color: black; }
-    .hidden { display: none; }
+    body { font-family: sans-serif; text-align: center; background: #f0f0f0; }
+    #status { font-size: 1.5rem; margin: 20px; }
+    button { padding: 10px 20px; margin: 5px; font-size: 1.2rem; }
   </style>
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 </head>
 <body>
-  <h1>Truth or Dare</h1>
-  <div id="status">Đang chờ người chơi...</div>
+  <h1>🎲 Truth or Dare</h1>
+  <p>Phòng: <span id="room"></span></p>
+  <div id="status">⏳ Đang chờ bắt đầu...</div>
 
-  <div id="choiceBox" class="hidden">
-    <p>Bạn bị chọn! Hãy chọn:</p>
-    <button class="truth" onclick="choose('truth')">Truth</button>
-    <button class="dare" onclick="choose('dare')">Dare</button>
+  <div id="choices" style="display:none;">
+    <button onclick="choose('truth')">Truth</button>
+    <button onclick="choose('dare')">Dare</button>
   </div>
 
-  <div id="questionBox" class="hidden">
-    <div id="questionText"></div>
-    <div id="voteBox" class="hidden">
-      <p>Bạn thấy người chơi thực hiện OK chứ?</p>
-      <button onclick="vote(true)">✅ Đồng ý</button>
-      <button onclick="vote(false)">❌ Không</button>
-    </div>
+  <div id="vote" style="display:none;">
+    <p>Bạn đồng ý câu trả lời? ✅/❌</p>
+    <button onclick="sendVote(true)">✅ Đồng ý</button>
+    <button onclick="sendVote(false)">❌ Không đồng ý</button>
   </div>
 
   <script>
-    const socket = io("https://camping-game-production.up.railway.app");
+    const urlParams = new URLSearchParams(window.location.search);
+    const roomCode = urlParams.get('code');
     const playerName = sessionStorage.getItem("playerName");
-    const roomCode = new URLSearchParams(window.location.search).get("code");
+    document.getElementById("room").innerText = roomCode;
 
-    const questions = {
-      truth: [
-        "Bạn từng thích ai trong nhóm chưa?",
-        "Bạn đã từng nói dối nghiêm trọng chưa?",
-        "Điều xấu hổ nhất bạn từng làm là gì?"
-      ],
-      dare: [
-        "Hát 1 bài hát bất kỳ!",
-        "Làm 10 cái hít đất",
-        "Giả giọng 1 người nổi tiếng"
-      ]
-    };
-
-    let isTarget = false;
-    let hasVoted = false;
-
-    socket.emit("join-game", { roomCode, player: playerName });
-
-    // Chủ phòng có thể bắt đầu vòng chơi
-    if (sessionStorage.getItem("isHost") === "true") {
-      setTimeout(() => {
-        socket.emit("start-round", { roomCode });
-      }, 2000);
-    }
-
-    socket.on("round-started", ({ target }) => {
-      document.getElementById("status").innerText = `${target} bị chọn!`;
-      if (target === playerName) {
-        isTarget = true;
-        document.getElementById("choiceBox").classList.remove("hidden");
-      }
+    const socket = io("https://camping-game-production.up.railway.app", {
+      transports: ["websocket"],
+      secure: true
     });
 
-    function choose(type) {
-      if (!isTarget) return;
-      const qList = questions[type];
-      const q = qList[Math.floor(Math.random() * qList.length)];
-      socket.emit("chosen-question", { roomCode, type, question: q });
-      document.getElementById("choiceBox").classList.add("hidden");
-    }
+    socket.emit("join-room", { roomCode, player: playerName });
 
-    socket.on("show-question", ({ question }) => {
-      document.getElementById("questionText").innerText = question;
-      document.getElementById("questionBox").classList.remove("hidden");
-      if (!isTarget) {
-        document.getElementById("voteBox").classList.remove("hidden");
-      }
+    // Khi server bắt đầu 1 vòng mới
+    socket.on("tod-your-turn", () => {
+      document.getElementById("status").innerText = "🎯 Bạn được chọn! Chọn Truth hoặc Dare:";
+      document.getElementById("choices").style.display = "block";
+      document.getElementById("vote").style.display = "none";
     });
 
-    function vote(val) {
-      if (hasVoted) return;
-      hasVoted = true;
-      socket.emit("vote", { roomCode, player: playerName, vote: val });
-      document.getElementById("voteBox").classList.add("hidden");
+    // Khi server yêu cầu vote
+    socket.on("tod-wait-vote", () => {
+      document.getElementById("status").innerText = "📝 Người chơi khác đang trả lời... Hãy chuẩn bị vote!";
+      document.getElementById("choices").style.display = "none";
+      document.getElementById("vote").style.display = "block";
+    });
+
+    // Khi server trả kết quả
+    socket.on("tod-result", ({ success, rate }) => {
+      document.getElementById("status").innerText = `🎉 Kết quả: ${success ? "Tiếp tục" : "Thử lại"} (${Math.round(rate*100)}% đồng ý)`;
+      document.getElementById("choices").style.display = "none";
+      document.getElementById("vote").style.display = "none";
+    });
+
+    function choose(option) {
+      document.getElementById("status").innerText = `🚀 Bạn đã chọn ${option.toUpperCase()}!`;
+      socket.emit("tod-choice", { roomCode, choice: option });
+      document.getElementById("choices").style.display = "none";
     }
 
-    socket.on("vote-result", ({ pass, yesPercent }) => {
-      document.getElementById("questionText").innerText += `\n✅ ${yesPercent}% chọn Đồng ý\n➡️ ${pass ? "Tiếp tục" : "Thử thách thất bại!"}`;
-    });
+    function sendVote(agree) {
+      socket.emit("tod-vote", { roomCode, vote: agree });
+      document.getElementById("status").innerText = "🙏 Đã gửi vote!";
+      document.getElementById("vote").style.display = "none";
+    }
   </script>
 </body>
 </html>
