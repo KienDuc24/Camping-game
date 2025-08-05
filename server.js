@@ -6,14 +6,13 @@ const cors = require("cors");
 const app = express();
 app.use(cors({
   origin: [
-    "https://camping-game.vercel.app"  // ✅ domain frontend của bạn
+    "https://camping-game.vercel.app"  // domain frontend thật
   ],
   credentials: true
 }));
 app.use(express.json());
 
 const server = http.createServer(app);
-
 const io = new Server(server, {
   cors: {
     origin: [
@@ -24,12 +23,12 @@ const io = new Server(server, {
   }
 });
 
-// Dữ liệu phòng
 let rooms = {};
 
 io.on("connection", (socket) => {
   console.log("🔌 Connected:", socket.id);
 
+  // 🎮 Quản lý join/leave/start
   socket.on("join-room", ({ roomCode, player }) => {
     socket.join(roomCode);
     if (!rooms[roomCode]) rooms[roomCode] = [];
@@ -77,18 +76,17 @@ io.on("connection", (socket) => {
     }
   });
 
-  // 🔁 Kết nối logic riêng cho Truth or Dare (nếu có)
+  // 🎯 Gắn module logic Truth or Dare đúng cách
   try {
-    require("./ToD/todSocket")(socket, io);
+    require("./games/ToD/todSocket")(socket, io, rooms);
   } catch (e) {
-    console.log("ℹ️ todSocket.js not found or error loading it (bỏ qua nếu chưa cần)");
+    console.log("ℹ️ Không tìm thấy hoặc lỗi todSocket.js:", e.message);
   }
 });
 
-// Endpoint kiểm tra server sống
+// API check server
 app.get("/", (req, res) => res.send("✅ Socket.io server is running"));
 
-// Khởi động server
 const PORT = process.env.PORT || 3000;
 const HOST = '0.0.0.0';
 server.listen(PORT, HOST, () => {
