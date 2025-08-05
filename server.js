@@ -6,7 +6,7 @@ const cors = require("cors");
 const app = express();
 app.use(cors({
   origin: [
-    "https://camping-game.vercel.app"  // ✅ Thay bằng domain frontend thật của bạn
+    "https://camping-game.vercel.app"  // ✅ domain frontend của bạn
   ],
   credentials: true
 }));
@@ -17,7 +17,7 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
     origin: [
-      "https://camping-game.vercel.app"  // ✅ Phải trùng với domain frontend
+      "https://camping-game.vercel.app"
     ],
     methods: ["GET", "POST"],
     credentials: true
@@ -27,7 +27,6 @@ const io = new Server(server, {
 // Dữ liệu phòng
 let rooms = {};
 
-// Xử lý socket.io
 io.on("connection", (socket) => {
   console.log("🔌 Connected:", socket.id);
 
@@ -86,10 +85,10 @@ io.on("connection", (socket) => {
   }
 });
 
-// API kiểm tra server sống
+// Endpoint kiểm tra server sống
 app.get("/", (req, res) => res.send("✅ Socket.io server is running"));
 
-// Lắng nghe
+// Khởi động server
 const PORT = process.env.PORT || 3000;
 const HOST = '0.0.0.0';
 server.listen(PORT, HOST, () => {
