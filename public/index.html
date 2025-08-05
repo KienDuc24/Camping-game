@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sảnh Game </title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="script.js" defer></script>
+  <link rel="icon" type="image/x-icon" href="fav.svg">
+
+</head>
+<body>
+  <div class="navbar">
+    <div class="navbar-title"><i class="fas fa-campground"></i> Sảnh Game</div>
+  </div>
+
+  <div class="main">
+    <h1>Chọn Trò Chơi</h1>
+    <div class="game-grid">
+      <div class="game-card">
+       <img src="../Game/Reaction/Img/Reaction.png" alt="" srcset="">
+        <div class="game-name">⚡ Reaction Game</div>
+        <div class="game-desc">Nhanh tay lẹ mắt – ai là phản xạ thần sầu?</div>
+        <button class="play-button" onclick="openRoomPopup('${game.name}')">🚀 Vào chơi</button>
+      </div>
+
+    </div>
+  </div>
+
+  <div id="overlay"></div>
+
+  <!-- Popup 1 -->
+  <div class="popup" id="roomOptions">
+    <p>🕹️ Bạn muốn làm gì?</p>
+    <button class="btn-green" onclick="showNicknameInput('create')">Tạo phòng</button>
+    <button class="btn-blue" onclick="showRoomCodeInput()">Tìm phòng</button>
+    <button class="btn-gray" onclick="closePopup()">Hủy</button>
+  </div>
+
+  <!-- Popup 2 -->
+  <div class="popup" id="roomCodeInput">
+    <p>🔍 Nhập mã phòng để tham gia</p>
+    <input type="text" id="roomCode" placeholder="Nhập mã phòng"/>
+    <button class="btn-blue" onclick="joinRoomAndRedirect()">Xác nhận</button>
+    <button class="btn-gray" onclick="backToRoomOptions()">Quay lại</button>
+  </div>
+
+  <!-- Popup 3 -->
+  <div class="popup" id="nicknameInput">
+    <p>✏️ Nhập nickname hiển thị của bạn</p>
+    <input type="text" id="playerName" placeholder="Tên hiển thị"/>
+    <button class="btn-green" onclick="submitNickname()">Tiếp tục</button>
+    <button class="btn-gray" onclick="backToRoomOptions()">Quay lại</button>
+  </div>
+
+  <audio id="clickSound" src="sound/click.wav" preload="auto"></audio>
+</body>
+</html>

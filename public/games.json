@@ -1,0 +1,30 @@
+[
+  {
+    "name": "🔞 Game 18+",
+    "desc": "Thử thách hấp dẫn! Khám phá giới hạn, vui hết nấc! 🔥",
+    "players": "1+",
+    "iconPath": "/game/18/Img/logo.png",
+    "id": "G18"
+  },
+  {
+    "name": "🎨 Draw",
+    "desc": "Họa sĩ tài ba trổ tài! Vẽ vời và sáng tạo! 😂",
+    "players": "3+",
+    "iconPath": "/game/Draw/Img/logo.png",
+    "id": "Draw"
+  },
+  {
+    "name": "❓ Truth or Dare",
+    "desc": "Hé lộ bí mật, dám chơi dám chịu! Thử thách bất ngờ! 😈",
+    "players": "4+",
+    "iconPath": "/game/TruthOrDare/Img/logo.png",
+    "id": "ToD"
+  },
+  {
+    "name": "🐺 Ma sói",
+    "desc": "Tìm kẻ ẩn mình! Đấu trí nghẹt thở, kịch tính đến phút cuối! 🕵️‍♂️",
+    "players": "5-20",
+    "iconPath": "/game/WereWolf/Img/logo.jpg",
+    "id": "WW"
+  }
+]
