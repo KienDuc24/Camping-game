@@ -4,18 +4,30 @@ const { Server } = require("socket.io");
 const cors = require("cors");
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: [
+    "https://camping-game.vercel.app"  // ✅ Thay bằng domain frontend thật của bạn
+  ],
+  credentials: true
+}));
+app.use(express.json());
 
 const server = http.createServer(app);
+
 const io = new Server(server, {
   cors: {
-    origin: "*", // Hoặc thay bằng domain frontend nếu muốn
-    methods: ["GET", "POST"]
+    origin: [
+      "https://camping-game.vercel.app"  // ✅ Phải trùng với domain frontend
+    ],
+    methods: ["GET", "POST"],
+    credentials: true
   }
 });
 
+// Dữ liệu phòng
 let rooms = {};
 
+// Xử lý socket.io
 io.on("connection", (socket) => {
   console.log("🔌 Connected:", socket.id);
 
@@ -23,14 +35,23 @@ io.on("connection", (socket) => {
     socket.join(roomCode);
     if (!rooms[roomCode]) rooms[roomCode] = [];
     rooms[roomCode].push({ name: player, socketId: socket.id });
-    io.to(roomCode).emit("update-players", rooms[roomCode].map(p => p.name));
+    io.to(roomCode).emit("update-players", {
+      list: rooms[roomCode].map(p => p.name),
+      host: rooms[roomCode][0]?.name || null
+    });
   });
 
   socket.on("leave-room", ({ roomCode, player }) => {
     if (rooms[roomCode]) {
       rooms[roomCode] = rooms[roomCode].filter(p => p.name !== player);
-      if (rooms[roomCode].length === 0) delete rooms[roomCode];
-      else io.to(roomCode).emit("update-players", rooms[roomCode].map(p => p.name));
+      if (rooms[roomCode].length === 0) {
+        delete rooms[roomCode];
+      } else {
+        io.to(roomCode).emit("update-players", {
+          list: rooms[roomCode].map(p => p.name),
+          host: rooms[roomCode][0]?.name || null
+        });
+      }
     }
     socket.leave(roomCode);
   });
@@ -41,32 +62,36 @@ io.on("connection", (socket) => {
 
   socket.on("disconnect", () => {
     for (const roomCode in rooms) {
-      const i = rooms[roomCode].findIndex(p => p.socketId === socket.id);
-      if (i !== -1) {
-        rooms[roomCode].splice(i, 1);
-        if (rooms[roomCode].length === 0) delete rooms[roomCode];
-        else io.to(roomCode).emit("update-players", rooms[roomCode].map(p => p.name));
+      const index = rooms[roomCode].findIndex(p => p.socketId === socket.id);
+      if (index !== -1) {
+        rooms[roomCode].splice(index, 1);
+        if (rooms[roomCode].length === 0) {
+          delete rooms[roomCode];
+        } else {
+          io.to(roomCode).emit("update-players", {
+            list: rooms[roomCode].map(p => p.name),
+            host: rooms[roomCode][0]?.name || null
+          });
+        }
         break;
       }
     }
   });
+
+  // 🔁 Kết nối logic riêng cho Truth or Dare (nếu có)
+  try {
+    require("./ToD/todSocket")(socket, io);
+  } catch (e) {
+    console.log("ℹ️ todSocket.js not found or error loading it (bỏ qua nếu chưa cần)");
+  }
 });
 
+// API kiểm tra server sống
 app.get("/", (req, res) => res.send("✅ Socket.io server is running"));
 
+// Lắng nghe
 const PORT = process.env.PORT || 3000;
-const HOST = '0.0.0.0'; // Thêm dòng này
-
-server.listen(PORT, HOST, () => { // Thay đổi dòng này để bao gồm HOST
+const HOST = '0.0.0.0';
+server.listen(PORT, HOST, () => {
   console.log(`🚀 Server running on http://${HOST}:${PORT}`);
 });
-
-//ToD
-const express = require("express");
-const http = require("http");
-const { Server } = require("socket.io");
-const cors = require("cors");
-
-// ✅ Gọi file ToD
-const setupToDSocket = require("./ToD/todSocket");
-setupToDSocket(io);
