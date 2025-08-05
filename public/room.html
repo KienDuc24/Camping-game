@@ -1,3 +1,4 @@
+<!-- room.html -->
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -18,7 +19,6 @@
       flex-direction: column;
       align-items: center;
     }
-
     .container {
       width: 100%;
       max-width: 700px;
@@ -30,10 +30,8 @@
       flex-direction: column;
       align-items: center;
     }
-
     h2 { font-size: 1.8rem; color: #2c3e50; margin-bottom: 6px; }
     p { color: #555; margin: 4px 0; }
-
     .code-box {
       background: #f1f3f5;
       padding: 8px 12px;
@@ -44,21 +42,18 @@
       gap: 10px;
       font-weight: 600;
     }
-
     ul#playerList {
       list-style: none;
       padding: 0;
       margin: 10px 0 0 0;
       width: 100%;
     }
-
     ul#playerList li {
       padding: 10px;
       border-top: 1px solid #eee;
       text-align: center;
       font-size: 1rem;
     }
-
     .buttons {
       display: flex;
       gap: 10px;
@@ -66,7 +61,6 @@
       flex-wrap: wrap;
       justify-content: center;
     }
-
     button {
       padding: 10px 16px;
       border: none;
@@ -75,11 +69,9 @@
       font-size: 0.95rem;
       cursor: pointer;
     }
-
     .copy-btn { background: #6c757d; color: white; }
     .start-btn { background: #28a745; color: white; }
     .leave-btn { background: #dc3545; color: white; }
-
     @media (max-width: 600px) {
       h2 { font-size: 1.5rem; }
       ul#playerList li { font-size: 0.95rem; }
@@ -95,9 +87,7 @@
       Mã phòng: <span id="roomCodeDisplay"></span>
       <button class="copy-btn" onclick="copyCode()">📋 Sao chép</button>
     </div>
-
     <ul id="playerList"><li>Đang tải...</li></ul>
-
     <div class="buttons">
       <button class="start-btn" onclick="startGame()">🚀 Bắt đầu</button>
       <button class="leave-btn" onclick="leaveRoom()">❌ Thoát phòng</button>
@@ -123,7 +113,10 @@
 
     socket.emit("join-room", { roomCode, player: playerName });
 
+    let currentHost = null;
+
     socket.on("update-players", ({ list, host }) => {
+      currentHost = host;
       const listEl = document.getElementById("playerList");
       listEl.innerHTML = list.map(name =>
         `<li>${name} ${name === host ? "(👑 Chủ phòng)" : ""}</li>`
@@ -142,32 +135,24 @@
       socket.emit("start-game", { roomCode, player: playerName });
     }
 
-   socket.on("game-started", async () => {
-    const gameName = urlParams.get("game");
+    socket.on("game-started", async ({ host }) => {
+      const gameName = urlParams.get("game");
 
-    try {
-      const res = await fetch("/games.json"); // 🔍 đúng đường dẫn
-      const games = await res.json();
+      try {
+        const res = await fetch("/games.json");
+        const games = await res.json();
+        const selected = games.find(g => g.name === gameName);
 
-      const selected = games.find(g => g.name === gameName);
-
-      if (selected) {
-        const folderId = selected.id;
-        // ✅ chuyển đến đúng file test: index.html trong Draw
-        window.location.href = `/game/${folderId}/index.html`;
-      } else {
-        alert("⚠️ Không tìm thấy game tương ứng.");
+        if (selected) {
+          const folderId = selected.id;
+          window.location.href = `/game/${folderId}/index.html?code=${roomCode}&host=${host}`;
+        } else {
+          alert("⚠️ Không tìm thấy game tương ứng.");
+        }
+      } catch (err) {
+        console.error("Lỗi khi load game.json:", err);
+        alert("Không thể bắt đầu trò chơi.");
       }
-    } catch (err) {
-      console.error("Lỗi khi load game.json:", err);
-      alert("Không thể bắt đầu trò chơi.");
-    }
-  });
-
-
-
-    socket.on("not-authorized", msg => {
-      alert("⚠️ " + msg);
     });
 
     window.addEventListener("beforeunload", () => {
