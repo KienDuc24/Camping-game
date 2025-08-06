@@ -60,9 +60,6 @@ io.on("connection", (socket) => {
     io.to(roomCode).emit("game-started", { host });
   });
 
-
-  });
-
   socket.on("disconnect", () => {
     for (const roomCode in rooms) {
       const index = rooms[roomCode].findIndex(p => p.socketId === socket.id);
