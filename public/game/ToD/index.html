@@ -29,37 +29,40 @@
 
 <script>
   const socket = io("https://camping-game-production.up.railway.app", {
-    transports: ["websocket"],
-    secure: true
-  });
+      transports: ["websocket"],
+      secure: true
+    });
 
-  const urlParams = new URLSearchParams(window.location.search);
-  const roomCode = urlParams.get("code");
-  const playerName = sessionStorage.getItem("playerName");
+    const urlParams = new URLSearchParams(window.location.search);
+    const roomCode = urlParams.get("code");
+    const host = urlParams.get("host"); // 👉 tên host từ room.html
+    const playerName = sessionStorage.getItem("playerName");
 
-  document.getElementById("roomCode").textContent = roomCode;
+    document.getElementById("roomCode").textContent = roomCode;
 
-  socket.on("connect", () => {
-    console.log("✅ Socket connected", socket.id);
-    socket.emit("tod-join", { roomCode, player: playerName });
-  });
+    socket.on("connect", () => {
+      console.log("✅ Socket connected", socket.id);
+      socket.emit("tod-join", { roomCode, player: playerName });
+    });
 
-  socket.on("tod-joined", ({ players, host: serverHost }) => {
-    console.log("✅ Vào phòng", roomCode, "| Host:", serverHost, "| Mình là:", playerName);
+    // 👉 Sửa ở đây: đổi tên 'host' thành 'serverHost'
+    socket.on("tod-joined", ({ players, host: serverHost }) => {
+      console.log("✅ Vào phòng", roomCode, "| Host:", serverHost, "| Mình là:", playerName);
 
-    document.getElementById("playerList").innerHTML =
-      players.map(p => `<li>${p}</li>`).join("");
-    document.getElementById("status").textContent = `Người chơi: ${players.length}`;
+      document.getElementById("playerList").innerHTML =
+        players.map(p => `<li>${p}</li>`).join("");
+      document.getElementById("status").textContent = `Người chơi: ${players.length}`;
 
-    if (playerName === serverHost) {
-      const btn = document.getElementById("startRoundBtn");
-      btn.style.display = "inline-block";
-      btn.onclick = () => {
-        console.log("🚀 Host bắt đầu vòng chơi");
-        socket.emit("tod-start-round", { roomCode });
-      };
-    }
-  });
+      // So sánh đúng: chỉ hiển thị nút nếu player là host
+      if (playerName === serverHost) {
+        const btn = document.getElementById("startRoundBtn");
+        btn.style.display = "inline-block";
+        btn.onclick = () => {
+          console.log("🚀 Host bắt đầu vòng chơi");
+          socket.emit("tod-start-round", { roomCode });
+        };
+      }
+    });
 
 
   socket.on("tod-your-turn", ({ player }) => {
