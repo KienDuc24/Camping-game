@@ -13,6 +13,8 @@
     li { padding: 6px 0; }
     button { padding: 10px 16px; border: none; border-radius: 6px; cursor: pointer; margin: 6px; font-size: 1rem; }
     .start-btn { background: #28a745; color: white; }
+    .choice-btn { background: #007bff; color: white; }
+    .vote-btn { background: #ffc107; color: black; }
   </style>
 </head>
 <body>
@@ -20,7 +22,10 @@
   <p>Phòng: <span id="roomCode"></span></p>
   <p id="status">⏳ Đang chờ...</p>
   <ul id="playerList"></ul>
-  <button id="startRoundBtn" class="start-btn" style="display: none;">🚀 Bắt đầu vòng chơi</button>
+
+  <div id="controls">
+    <button id="startRoundBtn" class="start-btn" style="display: none;">🚀 Bắt đầu vòng chơi</button>
+  </div>
 
   <script>
     const socket = io("https://camping-game-production.up.railway.app");
@@ -34,26 +39,90 @@
 
     socket.emit("tod-join", { roomCode, player: playerName });
 
-    socket.on("tod-joined", ({ players }) => {
+    socket.on("tod-joined", ({ players, host }) => {
       document.getElementById("playerList").innerHTML = players.map(p => `<li>${p}</li>`).join("");
       document.getElementById("status").textContent = `Người chơi: ${players.length}`;
-    });
 
-    window.addEventListener("DOMContentLoaded", () => {
-      const startBtn = document.getElementById("startRoundBtn");
       if (playerName === host) {
+        const startBtn = document.getElementById("startRoundBtn");
         startBtn.style.display = "inline-block";
-        startBtn.addEventListener("click", () => {
-          console.log("✅ Chủ phòng bắt đầu vòng chơi");
+        startBtn.onclick = () => {
           socket.emit("tod-start-round", { roomCode });
-        });
+          document.getElementById("status").textContent = "🔁 Đang chọn người...";
+        };
       }
     });
 
-    // Nếu cần: nhận sự kiện bắt đầu vòng chơi từ server
-    socket.on("tod-new-round", (data) => {
-      console.log("📥 Server bắt đầu vòng chơi:", data);
-      // TODO: hiển thị random người bị hỏi, xử lý chọn Truth/Dare, vote...
+    // Khi server chọn 1 người chơi bị hỏi
+    socket.on("tod-chosen", (chosenPlayer) => {
+      const isYou = chosenPlayer === playerName;
+      document.getElementById("status").textContent = isYou
+        ? "👉 Bạn được chọn! Hãy chọn Truth hoặc Dare:"
+        : `⏳ Đang chờ ${chosenPlayer} chọn Truth hoặc Dare...`;
+
+      const controls = document.getElementById("controls");
+      controls.innerHTML = "";
+
+      if (isYou) {
+        const btnTruth = document.createElement("button");
+        btnTruth.className = "choice-btn";
+        btnTruth.textContent = "Truth";
+        btnTruth.onclick = () => socket.emit("tod-choice", { roomCode, player: playerName, choice: "truth" });
+
+        const btnDare = document.createElement("button");
+        btnDare.className = "choice-btn";
+        btnDare.textContent = "Dare";
+        btnDare.onclick = () => socket.emit("tod-choice", { roomCode, player: playerName, choice: "dare" });
+
+        controls.appendChild(btnTruth);
+        controls.appendChild(btnDare);
+      }
+    });
+
+    // Khi server gửi câu hỏi sau khi chọn Truth hoặc Dare
+    socket.on("tod-question", ({ player, choice, question }) => {
+      document.getElementById("status").textContent = `${player} chọn ${choice.toUpperCase()}: ${question}`;
+
+      const controls = document.getElementById("controls");
+      controls.innerHTML = "";
+
+      if (player !== playerName) {
+        // Hiển thị vote nếu bạn không phải người bị hỏi
+        const btnV = document.createElement("button");
+        btnV.className = "vote-btn";
+        btnV.textContent = "✔️ Đồng ý";
+        btnV.onclick = () => socket.emit("tod-vote", { roomCode, player: playerName, vote: "V" });
+
+        const btnX = document.createElement("button");
+        btnX.className = "vote-btn";
+        btnX.textContent = "❌ Không hợp lệ";
+        btnX.onclick = () => socket.emit("tod-vote", { roomCode, player: playerName, vote: "X" });
+
+        controls.appendChild(btnV);
+        controls.appendChild(btnX);
+      }
+    });
+
+    socket.on("tod-voted", ({ player, vote }) => {
+      document.getElementById("status").textContent = `${player} đã vote: ${vote}`;
+    });
+
+    socket.on("tod-result", ({ result, message }) => {
+      document.getElementById("status").textContent = message;
+
+      const controls = document.getElementById("controls");
+      controls.innerHTML = "";
+      if (playerName === host) {
+        const btnNext = document.createElement("button");
+        btnNext.className = "start-btn";
+        btnNext.textContent = "➡️ Vòng tiếp theo";
+        btnNext.onclick = () => socket.emit("tod-start-round", { roomCode });
+        controls.appendChild(btnNext);
+      }
+    });
+
+    socket.on("tod-error", (msg) => {
+      alert("❌ " + msg);
     });
   </script>
 </body>
