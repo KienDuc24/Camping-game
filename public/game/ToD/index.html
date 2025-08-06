@@ -34,11 +34,25 @@
 
     const urlParams = new URLSearchParams(window.location.search);
     const roomCode = urlParams.get("code");
-    const hostFromURL = urlParams.get("host"); // truyền từ room.html
-    const playerName = sessionStorage.getItem("playerName");
+    const hostFromURL = urlParams.get("host"); // Passed from room.html
+    let playerName = sessionStorage.getItem("playerName");
+
+    // Nếu playerName chưa có, hỏi người dùng
+    if (!playerName) {
+      playerName = prompt("Vui lòng nhập tên của bạn:");
+      if (playerName) {
+        sessionStorage.setItem("playerName", playerName);
+      } else {
+        // Xử lý trường hợp người dùng không nhập tên
+        alert("Bạn phải nhập tên để tham gia trò chơi!");
+        window.location.href = "/"; // Quay về trang chính hoặc trang lỗi
+        // Dừng thực thi script nếu không có tên
+        throw new Error("Player name is required."); 
+      }
+    }
 
     document.getElementById("roomCode").textContent = roomCode;
-    let currentHost = null; // Thêm biến này để lưu host từ server
+    let currentHost = null; // Variable to store host from server
 
     socket.on("connect", () => {
       console.log("✅ Socket connected", socket.id);
@@ -46,29 +60,39 @@
     });
 
     socket.on("tod-joined", ({ players, host }) => {
-      currentHost = host; // Cập nhật biến host từ dữ liệu server gửi về
-      console.log("✅ Vào phòng", roomCode, "| Host từ server:", currentHost, "| Mình là:", playerName);
+      currentHost = host; // Update the host variable from server data
+      
+      console.log("--- Debugging Host Status ---");
+      console.log("1. Player Name (Client):", playerName);
+      console.log("2. Host Name (From Server):", currentHost);
+      console.log("3. Host Name (From URL):", hostFromURL);
+      console.log("4. Is current player host (playerName === currentHost)?", playerName === currentHost);
+      console.log("5. List of players in room (from server):", players);
+      console.log("-----------------------------");
 
       document.getElementById("playerList").innerHTML = players.map(p => `<li>${p}</li>`).join("");
       document.getElementById("status").textContent = `Người chơi: ${players.length}`;
 
-      const isHost = playerName === currentHost; // So sánh với host từ server
+      const isHost = playerName === currentHost; // Compare with host from server
 
       if (isHost) {
         const btn = document.getElementById("startRoundBtn");
         btn.style.display = "inline-block";
         btn.onclick = () => {
-          console.log("🚀 Chủ phòng bắt đầu vòng chơi");
+          console.log("🚀 Host starts the round");
           socket.emit("tod-start-round", { roomCode });
         };
+      } else {
+        // Đảm bảo nút bị ẩn nếu không phải host
+        document.getElementById("startRoundBtn").style.display = "none";
       }
     });
 
     socket.on("tod-your-turn", ({ player }) => {
       const isYou = player === playerName;
       document.getElementById("status").textContent = isYou
-        ? "👉 Bạn được chọn! Hãy chọn Truth hoặc Dare"
-        : `⏳ ${player} đang chọn Truth hoặc Dare...`;
+        ? "👉 It's your turn! Choose Truth or Dare"
+        : `⏳ ${player} is choosing Truth or Dare...`;
 
       const controls = document.getElementById("controls");
       controls.innerHTML = "";
@@ -85,12 +109,12 @@
     });
 
     socket.on("tod-question", ({ player, choice, question }) => {
-      document.getElementById("status").textContent = `${player} chọn ${choice.toUpperCase()}: ${question}`;
+      document.getElementById("status").textContent = `${player} chose ${choice.toUpperCase()}: ${question}`;
       const controls = document.getElementById("controls");
       controls.innerHTML = "";
 
       if (player !== playerName) {
-        ["✔️ Đồng ý", "❌ Không hợp lệ"].forEach((label, i) => {
+        ["✔️ Agree", "❌ Invalid"].forEach((label, i) => {
           const vote = i === 0 ? "V" : "X";
           const btn = document.createElement("button");
           btn.textContent = label;
@@ -102,7 +126,7 @@
     });
 
     socket.on("tod-voted", ({ player, vote }) => {
-      document.getElementById("status").textContent = `${player} đã vote: ${vote}`;
+      document.getElementById("status").textContent = `${player} voted: ${vote}`;
     });
 
     socket.on("tod-result", ({ message }) => {
@@ -111,9 +135,9 @@
       const controls = document.getElementById("controls");
       controls.innerHTML = "";
 
-      if (playerName === currentHost) { // So sánh với host từ server
+      if (playerName === currentHost) { // Compare with host from server
         const nextBtn = document.createElement("button");
-        nextBtn.textContent = "➡️ Vòng tiếp theo";
+        nextBtn.textContent = "➡️ Next Round";
         nextBtn.className = "start-btn";
         nextBtn.onclick = () => socket.emit("tod-start-round", { roomCode });
         controls.appendChild(nextBtn);

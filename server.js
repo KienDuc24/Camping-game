@@ -22,13 +22,13 @@ const io = new Server(server, {
 
 let rooms = {};
 
-// ✅ Require module xử lý game sau khi io được tạo
+// Require module to handle game logic after io is created
 const setupToDSocket = require("./games/ToD/todSocket");
 
 io.on("connection", (socket) => {
   console.log("🔌 Connected:", socket.id);
 
-  // 🎮 Quản lý join/leave/start
+  // Manage join/leave/start
   socket.on("join-room", ({ roomCode, player }) => {
     socket.join(roomCode);
     if (!rooms[roomCode]) rooms[roomCode] = [];
@@ -55,7 +55,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("start-game", ({ roomCode }) => {
-    console.log("🚀 Nhận yêu cầu start game:", roomCode);
+    console.log("🚀 Received start game request:", roomCode);
     const host = rooms[roomCode]?.[0]?.name;
     io.to(roomCode).emit("game-started", { host });
   });
@@ -78,7 +78,7 @@ io.on("connection", (socket) => {
     }
   });
 
-  // ✅ Gắn logic riêng cho Truth or Dare đúng cách
+  // Attach specific logic for Truth or Dare correctly
   setupToDSocket(socket, io, rooms);
 });
 
