@@ -39,11 +39,14 @@
 
     socket.emit("tod-join", { roomCode, player: playerName });
 
-    socket.on("tod-joined", ({ players, host }) => {
+    socket.on("tod-joined", ({ players, host: serverHost }) => {
+      console.log("👑 Host nhận được từ server:", host);
+      console.log("🙋 Tên bạn là:", playerName);
+
       document.getElementById("playerList").innerHTML = players.map(p => `<li>${p}</li>`).join("");
       document.getElementById("status").textContent = `Người chơi: ${players.length}`;
 
-      if (playerName === host) {
+      if (playerName === serverHost) {
         const startBtn = document.getElementById("startRoundBtn");
         startBtn.style.display = "inline-block";
         startBtn.onclick = () => {
@@ -51,6 +54,7 @@
           document.getElementById("status").textContent = "🔁 Đang chọn người...";
         };
       }
+
     });
 
     // Khi server chọn 1 người chơi bị hỏi
