@@ -2,12 +2,44 @@ module.exports = (socket, io, rooms) => {
   const votes = {};
 
   socket.on("tod-join", ({ roomCode, player }) => {
-    if (!rooms[roomCode]) return;
+    // Ensure the room exists. If not, return and potentially inform the client.
+    if (!rooms[roomCode]) {
+      console.log(`Room ${roomCode} not found for tod-join. Player: ${player}`);
+      io.to(socket.id).emit("tod-error", "Phòng không tồn tại hoặc đã bị đóng.");
+      return;
+    }
 
-    socket.join(roomCode);
+    // Find the player in the existing room list and update their socketId
+    let playerFound = false;
+    for (let i = 0; i < rooms[roomCode].length; i++) {
+      if (rooms[roomCode][i].name === player) {
+        rooms[roomCode][i].socketId = socket.id; // Update socketId for the new connection
+        playerFound = true;
+        break;
+      }
+    }
+
+    // If player not found in the room list (should ideally not happen if room.html flow is followed),
+    // add them. This might be a fallback for edge cases.
+    if (!playerFound) {
+        rooms[roomCode].push({ name: player, socketId: socket.id });
+        console.log(`Player ${player} added to room ${roomCode} via tod-join (fallback).`);
+    }
+
+    socket.join(roomCode); // Ensure the new socket joins the room for this game
+
+    // Emit tod-joined specifically to the joining player
     io.to(socket.id).emit("tod-joined", {
-      host: rooms[roomCode][0]?.name,
+      host: rooms[roomCode][0]?.name, // Host is always the first player in the array
       players: rooms[roomCode].map(p => p.name)
+    });
+
+    // Also broadcast to all others in the room (including the joining player)
+    // that the player list and host status might have updated.
+    // This helps synchronize state across all clients in the game room.
+    io.to(roomCode).emit("update-players", {
+        list: rooms[roomCode].map(p => p.name),
+        host: rooms[roomCode][0]?.name || null
     });
   });
 
