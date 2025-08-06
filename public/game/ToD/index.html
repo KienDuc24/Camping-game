@@ -36,6 +36,20 @@
     const roomCode = urlParams.get("code");
     const host = urlParams.get("host");
     const playerName = sessionStorage.getItem("playerName");
+    const startBtn = document.createElement("button");
+    startBtn.id = "startRoundBtn";
+    startBtn.className = "start-btn";
+    startBtn.textContent = "🚀 Bắt đầu vòng chơi";
+    startBtn.onclick = () => {
+      console.log("🚀 Host bắt đầu vòng chơi");
+      socket.emit("tod-start-round", { roomCode });
+    };
+
+    const controls = document.getElementById("controls");
+    controls.innerHTML = ""; // Xóa hết trước đó
+    if (playerName === serverHost) {
+      controls.appendChild(startBtn);
+    }
 
     document.getElementById("roomCode").textContent = roomCode;
 
