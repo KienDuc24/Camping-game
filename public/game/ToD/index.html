@@ -50,10 +50,11 @@
       // 👑 Nếu là chủ phòng => hiện nút
       const startBtn = document.getElementById("startRoundBtn");
       const isHost = playerName === serverHost;
-       if (playerName === host) {
-        document.getElementById("startBtn").style.display = "inline-block";
-      }
 
+      addEventListener(onload, () => {
+        startBtn.style.display = inline-block;
+
+      });
       if (isHost) {
         startBtn.onclick = () => {
           console.log("🚀 Chủ phòng bắt đầu vòng");
