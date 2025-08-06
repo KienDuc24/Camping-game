@@ -31,7 +31,11 @@ io.on("connection", (socket) => {
   // Manage join/leave/start
   socket.on("join-room", ({ roomCode, player }) => {
     socket.join(roomCode);
-    if (!rooms[roomCode]) rooms[roomCode] = [];
+    if (!rooms[roomCode]) {
+        rooms[roomCode] = [];
+        // Initialize gameStarted flag for the room
+        rooms[roomCode].gameStarted = false; 
+    }
     rooms[roomCode].push({ name: player, socketId: socket.id });
     io.to(roomCode).emit("update-players", {
       list: rooms[roomCode].map(p => p.name),
@@ -43,7 +47,13 @@ io.on("connection", (socket) => {
     if (rooms[roomCode]) {
       rooms[roomCode] = rooms[roomCode].filter(p => p.name !== player);
       if (rooms[roomCode].length === 0) {
-        delete rooms[roomCode];
+        // Only delete the room if it's empty AND the game hasn't started
+        if (!rooms[roomCode].gameStarted) {
+            delete rooms[roomCode];
+            console.log(`Room ${roomCode} deleted as it's empty and game not started.`);
+        } else {
+            console.log(`Room ${roomCode} is empty but game started. Keeping room for now.`);
+        }
       } else {
         io.to(roomCode).emit("update-players", {
           list: rooms[roomCode].map(p => p.name),
@@ -56,6 +66,10 @@ io.on("connection", (socket) => {
 
   socket.on("start-game", ({ roomCode }) => {
     console.log("🚀 Received start game request:", roomCode);
+    if (rooms[roomCode]) {
+        // Set gameStarted flag when the game officially starts
+        rooms[roomCode].gameStarted = true; 
+    }
     const host = rooms[roomCode]?.[0]?.name;
     io.to(roomCode).emit("game-started", { host });
   });
@@ -64,10 +78,18 @@ io.on("connection", (socket) => {
     for (const roomCode in rooms) {
       const index = rooms[roomCode].findIndex(p => p.socketId === socket.id);
       if (index !== -1) {
+        // Remove player from the room
         rooms[roomCode].splice(index, 1);
-        if (rooms[roomCode].length === 0) {
+
+        // Only delete the room if it's empty AND the game hasn't started
+        // This prevents rooms from being deleted during page navigation (e.g., to game page)
+        if (rooms[roomCode].length === 0 && !rooms[roomCode].gameStarted) {
           delete rooms[roomCode];
+          console.log(`Room ${roomCode} deleted due to empty and game not started.`);
+        } else if (rooms[roomCode].length === 0 && rooms[roomCode].gameStarted) {
+            console.log(`Room ${roomCode} is empty but game started. Keeping room.`);
         } else {
+          // Room is not empty, update players and host
           io.to(roomCode).emit("update-players", {
             list: rooms[roomCode].map(p => p.name),
             host: rooms[roomCode][0]?.name || null
