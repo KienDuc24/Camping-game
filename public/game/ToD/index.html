@@ -52,7 +52,7 @@
         btn.style.display = "inline-block";
         btn.onclick = () => {
           console.log("🚀 Host bắt đầu vòng chơi");
-          socket.emit("tod-start", { roomCode });
+          socket.emit("tod-start-round", { roomCode });
         };
       }
     });
@@ -118,7 +118,7 @@
         const nextBtn = document.createElement("button");
         nextBtn.textContent = "➡️ Vòng tiếp theo";
         nextBtn.className = "start-btn";
-        nextBtn.onclick = () => socket.emit("tod-start", { roomCode });
+        nextBtn.onclick = () => socket.emit("tod-start-round", { roomCode });
         controls.appendChild(nextBtn);
       }
     });
