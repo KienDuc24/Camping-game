@@ -1,4 +1,3 @@
-// public/game/ToD/index.html
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -23,13 +22,14 @@
   <p>Phòng: <span id="roomCode"></span></p>
   <p id="status">⏳ Đang chờ...</p>
   <ul id="playerList"></ul>
-  <div id="controls">
-    <button id="startRoundBtn" class="start-btn" style="display: none;">🚀 Bắt đầu vòng chơi</button>
-  </div>
+
+  <!-- ❗ Start button tách riêng, không bị xóa khi thay controls.innerHTML -->
+  <button id="startRoundBtn" class="start-btn" style="display: none;">🚀 Bắt đầu vòng chơi</button>
+
+  <div id="controls"></div>
 
   <script>
     const socket = io("https://camping-game-production.up.railway.app");
-
     const urlParams = new URLSearchParams(window.location.search);
     const roomCode = urlParams.get("code");
     const host = urlParams.get("host");
@@ -43,15 +43,18 @@
     });
 
     socket.on("tod-joined", ({ players, host: serverHost }) => {
-      console.log("✅ Bạn đã vào phòng", roomCode, "Host là:", serverHost);
+      console.log("✅ Vào phòng", roomCode, "| Host:", serverHost);
       document.getElementById("playerList").innerHTML = players.map(p => `<li>${p}</li>`).join("");
       document.getElementById("status").textContent = `Người chơi: ${players.length}`;
 
-      if (playerName === serverHost) {
-        const btn = document.getElementById("startRoundBtn");
-        btn.style.display = "inline-block";
-        btn.onclick = () => {
-          console.log("🚀 Host bắt đầu vòng chơi");
+      // 👑 Nếu là chủ phòng => hiện nút
+      const startBtn = document.getElementById("startRoundBtn");
+      const isHost = playerName === serverHost;
+      startBtn.style.display = isHost ? "inline-block" : "none";
+
+      if (isHost) {
+        startBtn.onclick = () => {
+          console.log("🚀 Chủ phòng bắt đầu vòng");
           socket.emit("tod-start-round", { roomCode });
         };
       }
@@ -84,7 +87,6 @@
 
     socket.on("tod-question", ({ player, choice, question }) => {
       document.getElementById("status").textContent = `${player} chọn ${choice.toUpperCase()}: ${question}`;
-
       const controls = document.getElementById("controls");
       controls.innerHTML = "";
 
@@ -110,17 +112,8 @@
 
     socket.on("tod-result", ({ result, message }) => {
       document.getElementById("status").textContent = message;
-
       const controls = document.getElementById("controls");
       controls.innerHTML = "";
-
-      if (playerName === host) {
-        const nextBtn = document.createElement("button");
-        nextBtn.textContent = "➡️ Vòng tiếp theo";
-        nextBtn.className = "start-btn";
-        nextBtn.onclick = () => socket.emit("tod-start-round", { roomCode });
-        controls.appendChild(nextBtn);
-      }
     });
 
     socket.on("tod-error", (msg) => {
