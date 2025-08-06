@@ -1,3 +1,32 @@
+<!-- public/game/ToD/index.html -->
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Truth or Dare</title>
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+  <style>
+    body { font-family: sans-serif; text-align: center; padding: 20px; background: #f8f9fa; }
+    h1 { margin-bottom: 10px; }
+    #status { margin: 20px 0; font-size: 1.2rem; }
+    ul { list-style: none; padding: 0; margin: 0 0 20px; }
+    li { padding: 6px 0; }
+    button { padding: 10px 16px; border: none; border-radius: 6px; cursor: pointer; margin: 6px; font-size: 1rem; }
+    .start-btn { background: #28a745; color: white; }
+    .choice-btn { background: #007bff; color: white; }
+    .vote-btn { background: #ffc107; color: black; }
+  </style>
+</head>
+<body>
+  <h1>🎲 Truth or Dare</h1>
+  <p>Phòng: <span id="roomCode"></span></p>
+  <p id="status">⏳ Đang chờ...</p>
+  <ul id="playerList"></ul>
+  <div id="controls">
+    <button id="startRoundBtn" class="start-btn" style="display: none;">🚀 Bắt đầu vòng chơi</button>
+  </div>
+
 <script>
   const socket = io("https://camping-game-production.up.railway.app", {
     transports: ["websocket"],
@@ -91,3 +120,6 @@
 
   socket.on("tod-error", (msg) => alert("❌ " + msg));
 </script>
+
+</body>
+</html>
