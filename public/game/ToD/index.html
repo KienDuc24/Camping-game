@@ -27,6 +27,7 @@
   </div>
 
   <script>
+    let currentHost = null; // Biến để lưu host từ server
     const socket = io("https://camping-game-production.up.railway.app", {
       transports: ["websocket"],
       secure: true
@@ -46,21 +47,19 @@
 
     socket.on("tod-joined", ({ players, host }) => {
       console.log("✅ Vào phòng", roomCode, "| Host từ server:", host, "| Mình là:", playerName);
-
+      currentHost = host; // Lưu host từ server vào biến
       document.getElementById("playerList").innerHTML = players.map(p => `<li>${p}</li>`).join("");
       document.getElementById("status").textContent = `Người chơi: ${players.length}`;
-
-      const isHost = playerName === host;
-
+      const isHost = playerName === currentHost; // So sánh với host từ server
       if (isHost) {
-        const btn = document.getElementById("startRoundBtn");
-        btn.style.display = "inline-block";
-        btn.onclick = () => {
-          console.log("🚀 Chủ phòng bắt đầu vòng chơi");
-          socket.emit("tod-start-round", { roomCode });
-        };
-      }
-    });
+          const btn = document.getElementById("startRoundBtn");
+          btn.style.display = "inline-block";
+          btn.onclick = () => {
+            console.log("🚀 Chủ phòng bắt đầu vòng chơi");
+            socket.emit("tod-start-round", { roomCode });
+          };
+        }
+   });
 
     socket.on("tod-your-turn", ({ player }) => {
       const isYou = player === playerName;
