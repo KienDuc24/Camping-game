@@ -44,15 +44,14 @@
     socket.emit("tod-join", { roomCode, player: playerName });
   });
 
-  socket.on("tod-joined", ({ players, host }) => {
-    console.log("✅ Vào phòng", roomCode, "| Host:", host, "| Mình là:", playerName);
+  socket.on("tod-joined", ({ players, host: serverHost }) => {
+    console.log("✅ Vào phòng", roomCode, "| Host:", serverHost, "| Mình là:", playerName);
 
     document.getElementById("playerList").innerHTML =
       players.map(p => `<li>${p}</li>`).join("");
     document.getElementById("status").textContent = `Người chơi: ${players.length}`;
 
-    // 💡 Bây giờ mới kiểm tra sau khi đã có host
-    if (playerName === host) {
+    if (playerName === serverHost) {
       const btn = document.getElementById("startRoundBtn");
       btn.style.display = "inline-block";
       btn.onclick = () => {
@@ -61,6 +60,7 @@
       };
     }
   });
+
 
   socket.on("tod-your-turn", ({ player }) => {
     const isYou = player === playerName;
