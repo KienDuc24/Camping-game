@@ -132,8 +132,10 @@
     }
 
     function startGame() {
+      console.log("📤 Gửi yêu cầu bắt đầu trò chơi");
       socket.emit("start-game", { roomCode, player: playerName });
     }
+
 
     socket.on("game-started", async ({ host }) => {
       const gameName = urlParams.get("game");
