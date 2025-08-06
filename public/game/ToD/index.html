@@ -1,4 +1,3 @@
-<!-- public/game/ToD/index.html -->
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -25,6 +24,7 @@
 
   <script>
     const socket = io("https://camping-game-production.up.railway.app");
+
     const urlParams = new URLSearchParams(window.location.search);
     const roomCode = urlParams.get("code");
     const host = urlParams.get("host");
@@ -39,12 +39,22 @@
       document.getElementById("status").textContent = `Người chơi: ${players.length}`;
     });
 
-    if (playerName === host) {
-      document.getElementById("startRoundBtn").style.display = "inline-block";
-      document.getElementById("startRoundBtn").onclick = () => {
-        socket.emit("tod-start-round", { roomCode });
-      };
-    }
+    window.addEventListener("DOMContentLoaded", () => {
+      const startBtn = document.getElementById("startRoundBtn");
+      if (playerName === host) {
+        startBtn.style.display = "inline-block";
+        startBtn.addEventListener("click", () => {
+          console.log("✅ Chủ phòng bắt đầu vòng chơi");
+          socket.emit("tod-start-round", { roomCode });
+        });
+      }
+    });
+
+    // Nếu cần: nhận sự kiện bắt đầu vòng chơi từ server
+    socket.on("tod-new-round", (data) => {
+      console.log("📥 Server bắt đầu vòng chơi:", data);
+      // TODO: hiển thị random người bị hỏi, xử lý chọn Truth/Dare, vote...
+    });
   </script>
 </body>
 </html>
