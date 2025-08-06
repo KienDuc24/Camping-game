@@ -29,7 +29,10 @@
   <div id="controls"></div>
 
   <script>
-    const socket = io("https://camping-game-production.up.railway.app");
+    const socket = io("https://camping-game-production.up.railway.app", {
+      transports: ["websocket"],  // ✅ ép dùng websocket
+      secure: true
+    });
     const urlParams = new URLSearchParams(window.location.search);
     const roomCode = urlParams.get("code");
     const host = urlParams.get("host");
@@ -50,11 +53,8 @@
       // 👑 Nếu là chủ phòng => hiện nút
       const startBtn = document.getElementById("startRoundBtn");
       const isHost = playerName === serverHost;
+      startBtn.style.display = isHost ? "inline-block" : "none";
 
-      addEventListener(onload, () => {
-        startBtn.style.display = inline-block;
-
-      });
       if (isHost) {
         startBtn.onclick = () => {
           console.log("🚀 Chủ phòng bắt đầu vòng");

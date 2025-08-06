@@ -19,6 +19,7 @@ const io = new Server(server, {
       "https://camping-game.vercel.app"
     ],
     methods: ["GET", "POST"],
+    transports: ['websocket'], 
     credentials: true
   }
 });
@@ -80,7 +81,7 @@ io.on("connection", (socket) => {
 
   // 🎯 Gắn module logic Truth or Dare đúng cách
   try {
-    require("./games/ToD/todSocket.js")(socket, io, rooms);
+    require("./games/ToD/todSocket")(socket, io, rooms);
   } catch (e) {
     console.log("ℹ️ Không tìm thấy hoặc lỗi todSocket.js:", e.message);
   }
