@@ -27,7 +27,6 @@
   </div>
 
   <script>
-    let currentHost = null; // Biến để lưu host từ server
     const socket = io("https://camping-game-production.up.railway.app", {
       transports: ["websocket"],
       secure: true
@@ -39,6 +38,7 @@
     const playerName = sessionStorage.getItem("playerName");
 
     document.getElementById("roomCode").textContent = roomCode;
+    let currentHost = null; // Thêm biến này để lưu host từ server
 
     socket.on("connect", () => {
       console.log("✅ Socket connected", socket.id);
@@ -46,20 +46,23 @@
     });
 
     socket.on("tod-joined", ({ players, host }) => {
-      console.log("✅ Vào phòng", roomCode, "| Host từ server:", host, "| Mình là:", playerName);
-      currentHost = host; // Lưu host từ server vào biến
+      currentHost = host; // Cập nhật biến host từ dữ liệu server gửi về
+      console.log("✅ Vào phòng", roomCode, "| Host từ server:", currentHost, "| Mình là:", playerName);
+
       document.getElementById("playerList").innerHTML = players.map(p => `<li>${p}</li>`).join("");
       document.getElementById("status").textContent = `Người chơi: ${players.length}`;
+
       const isHost = playerName === currentHost; // So sánh với host từ server
+
       if (isHost) {
-          const btn = document.getElementById("startRoundBtn");
-          btn.style.display = "inline-block";
-          btn.onclick = () => {
-            console.log("🚀 Chủ phòng bắt đầu vòng chơi");
-            socket.emit("tod-start-round", { roomCode });
-          };
-        }
-   });
+        const btn = document.getElementById("startRoundBtn");
+        btn.style.display = "inline-block";
+        btn.onclick = () => {
+          console.log("🚀 Chủ phòng bắt đầu vòng chơi");
+          socket.emit("tod-start-round", { roomCode });
+        };
+      }
+    });
 
     socket.on("tod-your-turn", ({ player }) => {
       const isYou = player === playerName;
@@ -108,7 +111,7 @@
       const controls = document.getElementById("controls");
       controls.innerHTML = "";
 
-      if (playerName === hostFromURL) {
+      if (playerName === currentHost) { // So sánh với host từ server
         const nextBtn = document.createElement("button");
         nextBtn.textContent = "➡️ Vòng tiếp theo";
         nextBtn.className = "start-btn";
