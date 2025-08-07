@@ -103,6 +103,9 @@ module.exports = (socket, io, rooms) => {
     const room = rooms[roomCode];
     if (!room) return;
     if (!room.votes) room.votes = [];
+    const currentAsked = room.players[room.currentIndex].name;
+    if (player === currentAsked) return; // BỎ QUA vote của người bị hỏi
+
     if (!room.votes.some(v => v.player === player)) {
       room.votes.push({ player, vote });
     }
