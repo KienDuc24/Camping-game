@@ -93,98 +93,76 @@
     </div>
   </div>
 
-<script>
-  const socket = io("https://camping-game-production.up.railway.app");
+  <script>
+    const socket = io("https://camping-game-production.up.railway.app");
 
-  const urlParams = new URLSearchParams(window.location.search);
-  const roomCode = urlParams.get("code");
-  const gameName = urlParams.get("game") || "Không xác định";
-  let playerName = sessionStorage.getItem("playerName");
+    const urlParams = new URLSearchParams(window.location.search);
+    const roomCode = urlParams.get("code");
+    const gameName = urlParams.get("game") || "Không xác định";
+    let playerName = sessionStorage.getItem("playerName");
 
-  if (!playerName) {
-    playerName = prompt("Tên của bạn là?");
-    if (playerName) sessionStorage.setItem("playerName", playerName);
-  }
+    if (!playerName) {
+      playerName = prompt("Tên của bạn là?");
+      if (playerName) sessionStorage.setItem("playerName", playerName);
+    }
 
-  document.getElementById("roomCode").innerText = roomCode;
-  document.getElementById("roomCodeDisplay").innerText = roomCode;
-  document.getElementById("gameName").innerText = gameName;
+    document.getElementById("roomCode").innerText = roomCode;
+    document.getElementById("roomCodeDisplay").innerText = roomCode;
+    document.getElementById("gameName").innerText = gameName;
 
-  let currentHost = null;
-  const startBtn = document.querySelector(".start-btn");
-  startBtn.style.display = "none"; // Ẩn trước
-
-  // Khi socket kết nối xong, mới join-room
-  socket.on("connect", () => {
-    console.log("✅ Socket connected:", socket.id);
     socket.emit("join-room", { roomCode, player: playerName });
-  });
 
-  socket.on("update-players", ({ list, host }) => {
-    currentHost = host;
-    console.log("📥 update-players:", list, "host:", host);
+    let currentHost = null;
 
-    const listEl = document.getElementById("playerList");
-    listEl.innerHTML = list.map(name =>
-      `<li>${name} ${name === host ? "(👑 Chủ phòng)" : ""}</li>`
-    ).join("");
+    socket.on("update-players", ({ list, host }) => {
+      currentHost = host;
+      const listEl = document.getElementById("playerList");
+      listEl.innerHTML = list.map(name =>
+        `<li>${name} ${name === host ? "(👑 Chủ phòng)" : ""}</li>`
+      ).join("");
 
-    if (playerName === host) {
-      startBtn.style.display = "inline-block";
-    } else {
-      startBtn.style.display = "none";
-    }
-  });
+      const startBtn = document.querySelector(".start-btn");
+      startBtn.style.display = playerName === host ? "inline-block" : "none";
+    });
 
-  function leaveRoom() {
-    socket.emit("leave-room", { roomCode, player: playerName });
-    window.location.href = "index.html";
-  }
-
-  function startGame() {
-    // Đảm bảo đã nhận update-players trước khi start
-    if (!currentHost) {
-      alert("⏳ Vui lòng đợi, đang kết nối đến phòng...");
-      return;
+    function leaveRoom() {
+      socket.emit("leave-room", { roomCode, player: playerName });
+      window.location.href = "index.html";
     }
 
-    if (playerName !== currentHost) {
-      alert("⚠️ Chỉ chủ phòng mới được bắt đầu trò chơi!");
-      return;
+    function startGame() {
+      console.log("📤 Gửi yêu cầu bắt đầu trò chơi");
+      socket.emit("start-game", { roomCode, player: playerName });
     }
 
-    console.log("🚀 Host gửi yêu cầu bắt đầu trò chơi");
-    socket.emit("start-game", { roomCode, player: playerName });
-  }
+    socket.on("game-started", async ({ host }) => {
+      const gameName = urlParams.get("game");
 
-  socket.on("game-started", async ({ host }) => {
-    console.log("🎮 Trò chơi đã bắt đầu! Host:", host);
+      try {
+        const res = await fetch("/games.json");
+        const games = await res.json();
+        const selected = games.find(g => g.name === gameName);
 
-    try {
-      const res = await fetch("/games.json");
-      const games = await res.json();
-      const selected = games.find(g => g.name === gameName);
-
-      if (selected) {
-        const folderId = selected.id;
-        window.location.href = `/game/${folderId}/index.html?code=${roomCode}&host=${host}`;
-      } else {
-        alert("⚠️ Không tìm thấy game tương ứng.");
+        if (selected) {
+          const folderId = selected.id;
+          window.location.href = `/game/${folderId}/index.html?code=${roomCode}&host=${host}`;
+        } else {
+          alert("⚠️ Không tìm thấy game tương ứng.");
+        }
+      } catch (err) {
+        console.error("Lỗi khi load game.json:", err);
+        alert("Không thể bắt đầu trò chơi.");
       }
-    } catch (err) {
-      console.error("Lỗi khi load games.json:", err);
-      alert("Không thể bắt đầu trò chơi.");
+    });
+
+    window.addEventListener("beforeunload", () => {
+      socket.emit("leave-room", { roomCode, player: playerName });
+    });
+
+    function copyCode() {
+      navigator.clipboard.writeText(roomCode);
+      alert("📋 Mã phòng đã được sao chép!");
     }
-  });
-
-  window.addEventListener("beforeunload", () => {
-    socket.emit("leave-room", { roomCode, player: playerName });
-  });
-
-  function copyCode() {
-    navigator.clipboard.writeText(roomCode);
-    alert("📋 Mã phòng đã được sao chép!");
-  }
-</script>
+  </script>
 </body>
 </html>

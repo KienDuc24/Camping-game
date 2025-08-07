@@ -11,7 +11,14 @@
     #status { margin: 20px 0; font-size: 1.2rem; }
     ul { list-style: none; padding: 0; margin: 0 0 20px; }
     li { padding: 6px 0; }
-    button { padding: 10px 16px; border: none; border-radius: 6px; cursor: pointer; margin: 6px; font-size: 1rem; }
+    button {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin: 6px;
+      font-size: 1rem;
+    }
     .start-btn { background: #28a745; color: white; }
     .choice-btn { background: #007bff; color: white; }
     .vote-btn { background: #ffc107; color: black; }
@@ -23,7 +30,7 @@
   <p id="status">⏳ Đang chờ...</p>
   <ul id="playerList"></ul>
   <div id="controls">
-    <button id="startRoundBtn" class="start-btn">🚀 Bắt đầu vòng chơi</button>
+    <button id="startRoundBtn" class="start-btn" style="display: none;">🚀 Bắt đầu vòng chơi</button>
   </div>
 
   <script>
@@ -34,25 +41,22 @@
 
     const urlParams = new URLSearchParams(window.location.search);
     const roomCode = urlParams.get("code");
-    const hostFromURL = urlParams.get("host"); // Passed from room.html
+    const hostFromURL = urlParams.get("host");
     let playerName = sessionStorage.getItem("playerName");
 
-    // Nếu playerName chưa có, hỏi người dùng
     if (!playerName) {
       playerName = prompt("Vui lòng nhập tên của bạn:");
       if (playerName) {
         sessionStorage.setItem("playerName", playerName);
       } else {
-        // Xử lý trường hợp người dùng không nhập tên
         alert("Bạn phải nhập tên để tham gia trò chơi!");
-        window.location.href = "/"; // Quay về trang chính hoặc trang lỗi
-        // Dừng thực thi script nếu không có tên
-        throw new Error("Player name is required."); 
+        window.location.href = "/";
+        throw new Error("Player name is required.");
       }
     }
 
     document.getElementById("roomCode").textContent = roomCode;
-    let currentHost = null; // Variable to store host from server
+    let currentHost = null;
 
     socket.on("connect", () => {
       console.log("✅ Socket connected", socket.id);
@@ -61,13 +65,8 @@
 
     socket.on("tod-joined", ({ players, host }) => {
       const startBtn = document.getElementById("startRoundBtn");
-      startBtn.style.display = playerName === host ? "inline-block" : "none";
+      currentHost = host;
 
-
-      console.log(`📥 Server nhận tod-join: roomCode=${roomCode}, player=${player}, rooms=${JSON.stringify(rooms[roomCode])}`);
-        if (!rooms[roomCode]) return;
-      currentHost = host; // Update the host variable from server data
-      
       console.log("--- Debugging Host Status ---");
       console.log("1. Player Name (Client):", playerName);
       console.log("2. Host Name (From Server):", currentHost);
@@ -79,22 +78,22 @@
       document.getElementById("playerList").innerHTML = players.map(p => `<li>${p}</li>`).join("");
       document.getElementById("status").textContent = `Người chơi: ${players.length}`;
 
-      const isHost = playerName === currentHost; // Compare with host from server
-
-      if (isHost) {
-
-        btn.onclick = () => {
+      if (playerName === currentHost) {
+        startBtn.style.display = "inline-block";
+        startBtn.onclick = () => {
           console.log("🚀 Host starts the round");
           socket.emit("tod-start-round", { roomCode });
         };
+      } else {
+        startBtn.style.display = "none";
       }
     });
 
     socket.on("tod-your-turn", ({ player }) => {
       const isYou = player === playerName;
       document.getElementById("status").textContent = isYou
-        ? "👉 It's your turn! Choose Truth or Dare"
-        : `⏳ ${player} is choosing Truth or Dare...`;
+        ? "👉 Đến lượt bạn! Chọn Truth hoặc Dare"
+        : `⏳ ${player} đang chọn Truth hoặc Dare...`;
 
       const controls = document.getElementById("controls");
       controls.innerHTML = "";
@@ -104,31 +103,40 @@
           const btn = document.createElement("button");
           btn.textContent = choice;
           btn.className = "choice-btn";
-          btn.onclick = () => socket.emit("tod-choice", { roomCode, player: playerName, choice: choice.toLowerCase() });
+          btn.onclick = () => socket.emit("tod-choice", {
+            roomCode,
+            player: playerName,
+            choice: choice.toLowerCase()
+          });
           controls.appendChild(btn);
         });
       }
     });
 
     socket.on("tod-question", ({ player, choice, question }) => {
-      document.getElementById("status").textContent = `${player} chose ${choice.toUpperCase()}: ${question}`;
+      document.getElementById("status").textContent =
+        `${player} chọn ${choice.toUpperCase()}: ${question}`;
       const controls = document.getElementById("controls");
       controls.innerHTML = "";
 
       if (player !== playerName) {
-        ["✔️ Agree", "❌ Invalid"].forEach((label, i) => {
+        ["✔️ Đồng ý", "❌ Không hợp lệ"].forEach((label, i) => {
           const vote = i === 0 ? "V" : "X";
           const btn = document.createElement("button");
           btn.textContent = label;
           btn.className = "vote-btn";
-          btn.onclick = () => socket.emit("tod-vote", { roomCode, player: playerName, vote });
+          btn.onclick = () => socket.emit("tod-vote", {
+            roomCode,
+            player: playerName,
+            vote
+          });
           controls.appendChild(btn);
         });
       }
     });
 
     socket.on("tod-voted", ({ player, vote }) => {
-      document.getElementById("status").textContent = `${player} voted: ${vote}`;
+      document.getElementById("status").textContent = `${player} đã vote: ${vote}`;
     });
 
     socket.on("tod-result", ({ message }) => {
@@ -137,9 +145,9 @@
       const controls = document.getElementById("controls");
       controls.innerHTML = "";
 
-      if (playerName === currentHost) { // Compare with host from server
+      if (playerName === currentHost) {
         const nextBtn = document.createElement("button");
-        nextBtn.textContent = "➡️ Next Round";
+        nextBtn.textContent = "➡️ Vòng tiếp theo";
         nextBtn.className = "start-btn";
         nextBtn.onclick = () => socket.emit("tod-start-round", { roomCode });
         controls.appendChild(nextBtn);
