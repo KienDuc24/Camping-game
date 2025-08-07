@@ -17,13 +17,19 @@
       display: flex;
       flex-direction: column;
       align-items: center;
+      /* Thêm hình nền cắm trại nhẹ */
+      background-image: url('https://cdn.pixabay.com/photo/2017/01/20/00/30/camping-1990100_1280.png');
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-position: bottom center;
     }
     h1 {
-      margin: 24px 0 10px 0;
-      font-size: 2.2rem;
+      margin: 16px 0 6px 0;
+      font-size: 1.3rem;
       color: #333;
       letter-spacing: 1px;
       text-shadow: 1px 1px 0 #fff, 2px 2px 8px #43c6ac44;
+      font-weight: 700;
     }
     #status {
       margin: 18px 0 10px 0;
@@ -117,8 +123,10 @@
     }
     .card {
       position: absolute;
-      width: 100%;
-      height: 100%;
+      left: 50%; top: 50%;
+      transform: translate(-50%, -50%);
+      width: 320px;
+      height: 220px;
       background: #fff;
       border-radius: 18px;
       box-shadow: 0 8px 32px #0003;
@@ -126,10 +134,10 @@
       flex-direction: column;
       justify-content: space-between;
       align-items: center;
-      transition: transform 0.4s cubic-bezier(.68,-0.55,.27,1.55), opacity 0.3s;
-      z-index: 2;
+      z-index: 10;
       padding: 24px 18px 18px 18px;
       font-size: 1.15rem;
+      border: 3px solid #43c6ac;
     }
     .card.hidden {
       display: none;
@@ -160,7 +168,8 @@
     /* Table Styles */
     #table-area {
       position: relative;
-      width: 340px;
+      width: 98vw;
+      max-width: 600px;
       height: 340px;
       margin: 0 auto 18px auto;
       display: flex;
@@ -169,15 +178,19 @@
     }
     #table {
       position: absolute;
-      width: 220px;
-      height: 220px;
+      width: 95vw;
+      max-width: 520px;
+      height: 260px;
       left: 50%; top: 50%;
       transform: translate(-50%, -50%);
-      background: radial-gradient(circle at 60% 40%, #fff 60%, #43c6ac22 100%);
-      border-radius: 50%;
-      border: 6px solid #43c6ac;
-      box-shadow: 0 8px 32px #43c6ac33;
+      background: radial-gradient(ellipse at 60% 40%, #fff 60%, #43c6ac33 100%);
+      border-radius: 50% / 40%;
+      border: 8px solid #43c6ac;
+      box-shadow: 0 8px 32px #43c6ac33, 0 0 0 12px #fff8;
       z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
     #table th, #table td {
       padding: 12px 16px;
@@ -194,7 +207,7 @@
     }
     .player-avatar {
       position: absolute;
-      width: 54px; height: 54px;
+      width: 64px; height: 64px;
       border-radius: 50%;
       background: #fff;
       border: 2px solid #43c6ac;
@@ -206,8 +219,16 @@
       transition: border 0.2s;
     }
     .player-avatar.host {
-      border: 3px solid #ffb347;
+      border: 3px solid #ffd700;
       background: #fffbe6;
+    }
+    .player-avatar.host::before {
+      content: '';
+      display: block;
+      position: absolute;
+      top: -28px; left: 50%; transform: translateX(-50%);
+      width: 32px; height: 32px;
+      background: url('https://cdn-icons-png.flaticon.com/512/616/616490.png') no-repeat center/contain;
     }
     .player-avatar.you {
       border: 3px solid #43e97b;
@@ -225,14 +246,15 @@
       ul#playerList li { font-size: 0.95rem; padding: 5px 8px; }
       button { font-size: 1rem; padding: 10px 12px; }
       #controls { gap: 6px; }
-      #table-area { width: 180px; height: 180px; }
-      #table { width: 90px; height: 90px; }
+      #table-area { height: 180px; }
+      #table { height: 110px; }
       .player-avatar { width: 32px; height: 32px; font-size: 1.1rem; }
+      .card { width: 90vw; min-width: 180px; height: 140px; font-size: 1rem; }
     }
   </style>
 </head>
 <body>
-  <h1>🎲 Truth or Dare</h1>
+  <h1 style="font-size:1.3rem;letter-spacing:2px;">🏕️ Truth or Dare</h1>
   <p>Phòng: <span id="roomCode"></span></p>
   <p id="status">⏳ Đang chờ...</p>
   <ul id="playerList"></ul>
@@ -286,7 +308,7 @@
     socket.on("tod-joined", ({ players, host }) => {
       currentHost = host;
       document.getElementById("playerList").innerHTML = players
-        .map((p, i) => `<li>${i === 0 ? "🎲 " : "👤 "}${p.name}</li>`)
+        .map((p, i) => `<li>${i === 0 ? "👑 " : "👤 "}${p.name}</li>`)
         .join("");
       document.getElementById("status").textContent = `Người chơi: ${players.length}`;
       renderTable(players, currentAsked);
@@ -304,14 +326,15 @@
       const table = document.getElementById("table-area");
       table.querySelectorAll(".player-avatar").forEach(e => e.remove());
       const n = players.length;
-      // Responsive bán kính
       const isMobile = window.innerWidth <= 600;
-      const R = isMobile ? 60 : 140;
-      const center = isMobile ? 90 : 170;
+      const a = isMobile ? 45 : 210; // trục bán kính ngang
+      const b = isMobile ? 30 : 90;  // trục bán kính dọc
+      const centerX = isMobile ? 90 : 260;
+      const centerY = isMobile ? 55 : 130;
       players.forEach((p, i) => {
         const angle = (2 * Math.PI * i) / n - Math.PI / 2;
-        const x = center + R * Math.cos(angle) - (isMobile ? 16 : 27);
-        const y = center + R * Math.sin(angle) - (isMobile ? 16 : 27);
+        const x = centerX + a * Math.cos(angle) - (isMobile ? 16 : 32);
+        const y = centerY + b * Math.sin(angle) - (isMobile ? 16 : 32);
         const div = document.createElement("div");
         div.className = "player-avatar" +
           (i === 0 ? " host" : "") +
@@ -362,14 +385,16 @@
       if (!isYou) {
         document.getElementById("controls").innerHTML = `<div class="spinner"></div>`;
       } else {
-        ["Truth", "Dare"].forEach(choice => {
+        ["Sự thật", "Thử thách"].forEach((label, idx) => {
           const btn = document.createElement("button");
-          btn.textContent = choice;
+          btn.innerHTML = idx === 0
+            ? '👼 Sự thật'
+            : '😈 Thử thách';
           btn.className = "choice-btn";
           btn.onclick = () => socket.emit("tod-choice", {
             roomCode,
             player: playerName,
-            choice: choice.toLowerCase()
+            choice: idx === 0 ? "truth" : "dare"
           });
           document.getElementById("controls").appendChild(btn);
         });
@@ -413,10 +438,12 @@
 
     // Button logic
     acceptBtn.onclick = () => {
+      if (playerName === currentAsked) return;
       hideCard("swipe-right");
       socket.emit("tod-vote", { roomCode, player: playerName, vote: "accept" });
     };
     rejectBtn.onclick = () => {
+      if (playerName === currentAsked) return;
       hideCard("swipe-left");
       socket.emit("tod-vote", { roomCode, player: playerName, vote: "reject" });
     };
