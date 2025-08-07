@@ -110,6 +110,7 @@ module.exports = (socket, io, rooms) => {
         io.to(roomCode).emit("tod-result", { result: "accepted" });
         // Đến lượt tiếp theo
         room.currentIndex = (room.currentIndex + 1) % room.players.length;
+        room.votes = []; // <--- Reset votes ở đây
         const nextPlayer = room.players[room.currentIndex].name;
         setTimeout(() => {
           io.to(roomCode).emit("tod-your-turn", { player: nextPlayer });
@@ -118,12 +119,12 @@ module.exports = (socket, io, rooms) => {
         io.to(roomCode).emit("tod-result", { result: "rejected" });
         // Người chơi phải trả lời lại (gửi lại câu hỏi)
         setTimeout(() => {
+          room.votes = []; // <--- Reset votes ở đây
           io.to(roomCode).emit("tod-question", {
             player: room.players[room.currentIndex].name,
             choice: room.lastChoice,
             question: room.lastQuestion
           });
-          room.votes = [];
         }, 2000);
       }
     }
