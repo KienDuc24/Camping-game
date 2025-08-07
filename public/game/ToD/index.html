@@ -309,6 +309,37 @@
     @media (max-width: 600px) {
       .question-popup { font-size: 1rem; padding: 10px 10px; }
     }
+
+    /* Vote Popup Styles */
+    .vote-popup {
+      position: fixed;
+      left: 50%;
+      bottom: 24px;
+      transform: translateX(-50%);
+      z-index: 200;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px #0003;
+      padding: 10px 18px;
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      transition: all 0.2s;
+    }
+    .vote-popup.hidden {
+      display: none;
+    }
+    @media (max-width: 600px) {
+      .vote-popup {
+        padding: 6px 8px;
+        gap: 8px;
+        bottom: 12px;
+      }
+      .vote-popup button {
+        font-size: 0.95rem;
+        padding: 8px 10px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -335,6 +366,10 @@
   </div>
 
   <div id="question-popup" class="question-popup hidden"></div>
+  <div id="vote-popup" class="vote-popup hidden">
+    <button id="rejectBtn" class="btn-red">Không thông qua</button>
+    <button id="acceptBtn" class="btn-green">Thông qua</button>
+  </div>
 
   <script>
     const socket = io("https://camping-game-production.up.railway.app", {
@@ -387,8 +422,9 @@
       table.querySelectorAll(".player-avatar").forEach(e => e.remove());
       const n = players.length;
       const isMobile = window.innerWidth <= 600;
-      const a = isMobile ? 90 : 220; // bán kính ngang lớn hơn bàn
-      const b = isMobile ? 45 : 110; // bán kính dọc lớn hơn bàn
+      // Tăng bán kính để avatar nằm ngoài bàn
+      const a = isMobile ? 110 : 260; // bán kính ngang
+      const b = isMobile ? 60 : 130;  // bán kính dọc
       const centerX = isMobile ? 90 : 210;
       const centerY = isMobile ? 45 : 110;
       players.forEach((p, i) => {
@@ -397,7 +433,6 @@
         const y = centerY + b * Math.sin(angle) - (isMobile ? 16 : 32);
         const div = document.createElement("div");
         div.className = "player-avatar" +
-          (i === 0 ? " host" : "") +
           (p.name === playerName ? " you" : "") +
           (askedName && p.name === askedName ? " asked" : "");
         div.style.left = x + "px";
@@ -435,13 +470,12 @@
       const isYou = player === playerName;
       document.getElementById("status").textContent =
         isYou
-          ? "👉 Đến lượt bạn! Chọn Truth hoặc Dare"
-          : `⏳ ${player} đang chọn Truth hoặc Dare...`;
+          ? "👉 Đến lượt bạn! Chọn Sự thật hoặc Thử thách"
+          : `⏳ ${player} đang chọn Sự thật hoặc Thử thách...`;
 
       document.getElementById("controls").innerHTML = "";
+      currentAsked = null;
 
-      currentAsked = null; // Chưa có ai bị hỏi
-      // Hiện spinner khi chờ người khác chọn
       if (!isYou) {
         document.getElementById("controls").innerHTML = `<div class="spinner"></div>`;
       } else {
@@ -451,11 +485,15 @@
             ? '👼 Sự thật'
             : '😈 Thử thách';
           btn.className = "choice-btn " + (idx === 0 ? "truth" : "dare");
-          btn.onclick = () => socket.emit("tod-choice", {
-            roomCode,
-            player: playerName,
-            choice: idx === 0 ? "truth" : "dare"
-          });
+          btn.onclick = () => {
+            socket.emit("tod-choice", {
+              roomCode,
+              player: playerName,
+              choice: idx === 0 ? "truth" : "dare"
+            });
+            // Ẩn nút sau khi chọn
+            document.getElementById("controls").innerHTML = `<div class="spinner"></div>`;
+          };
           document.getElementById("controls").appendChild(btn);
         });
       }
@@ -508,6 +546,10 @@
       socket.emit("tod-vote", { roomCode, player: playerName, vote: "reject" });
     };
 
+    // Ẩn popup vote mặc định
+    const votePopup = document.getElementById("vote-popup");
+    votePopup.classList.add("hidden");
+
     // Khi nhận thử thách mới
     socket.on("tod-question", ({ player, choice, question }) => {
       currentAsked = player;
@@ -517,24 +559,19 @@
       );
       showQuestionPopup(player, choice, question);
 
-      // Ẩn nút vote nếu là người bị hỏi
+      // Hiện popup vote nếu không phải người bị hỏi
       if (playerName === player) {
-        document.getElementById("acceptBtn").style.display = "none";
-        document.getElementById("rejectBtn").style.display = "none";
+        votePopup.classList.add("hidden");
       } else {
-        document.getElementById("acceptBtn").style.display = "";
-        document.getElementById("rejectBtn").style.display = "";
+        votePopup.classList.remove("hidden");
       }
     });
 
-    socket.on("tod-voted", ({ acceptCount, voted, total }) => {
-      document.getElementById("status").textContent =
-        `Chấp nhận: ${acceptCount}/${total} | Đã vote: ${voted}/${total}`;
-    });
-
+    // Khi đã vote xong hoặc hết lượt thì ẩn popup vote
     socket.on("tod-result", ({ result }) => {
       hideQuestionPopup();
       card.classList.add("hidden");
+      votePopup.classList.add("hidden");
       if (result === "accepted") {
         document.getElementById("status").textContent = "✅ Đa số chấp nhận! Đến lượt tiếp theo...";
       } else {
