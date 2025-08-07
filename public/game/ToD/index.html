@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Truth or Dare</title>
+  <link rel="icon" type="image/x-icon" href="./Img/logo.png">
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
   <link href="https://fonts.googleapis.com/css?family=Quicksand:700&display=swap" rel="stylesheet">
   <style>
@@ -106,6 +107,113 @@
     }
     @keyframes spin { 100% { transform: rotate(360deg); } }
 
+    /* Challenge Card Styles */
+    #challenge-area {
+      position: relative;
+      width: 320px;
+      height: 220px;
+      margin: 0 auto 20px auto;
+      perspective: 1000px;
+    }
+    .card {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background: #fff;
+      border-radius: 18px;
+      box-shadow: 0 8px 32px #0003;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      transition: transform 0.4s cubic-bezier(.68,-0.55,.27,1.55), opacity 0.3s;
+      z-index: 2;
+      padding: 24px 18px 18px 18px;
+      font-size: 1.15rem;
+    }
+    .card.hidden {
+      display: none;
+    }
+    .card.swipe-left {
+      transform: translateX(-400px) rotate(-20deg);
+      opacity: 0;
+    }
+    .card.swipe-right {
+      transform: translateX(400px) rotate(20deg);
+      opacity: 0;
+    }
+    .card-content {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-size: 1.2rem;
+      color: #222;
+    }
+    .card-actions {
+      display: flex;
+      gap: 18px;
+      margin-top: 18px;
+    }
+
+    /* Table Styles */
+    #table-area {
+      position: relative;
+      width: 340px;
+      height: 340px;
+      margin: 0 auto 18px auto;
+    }
+    #table {
+      position: absolute;
+      width: 220px;
+      height: 220px;
+      left: 50%; top: 50%;
+      transform: translate(-50%, -50%);
+      background: #fff9;
+      border-radius: 50%;
+      border: 4px solid #43c6ac;
+      z-index: 1;
+    }
+    #table th, #table td {
+      padding: 12px 16px;
+      text-align: center;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      background: #fff;
+      color: #333;
+      font-size: 1rem;
+    }
+    #table th {
+      background: #f4f4f9;
+      font-weight: 600;
+    }
+    .player-avatar {
+      position: absolute;
+      width: 54px; height: 54px;
+      border-radius: 50%;
+      background: #fff;
+      border: 2px solid #43c6ac;
+      box-shadow: 0 2px 8px #0002;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      transition: border 0.2s;
+    }
+    .player-avatar.host {
+      border: 3px solid #ffb347;
+      background: #fffbe6;
+    }
+    .player-avatar.you {
+      border: 3px solid #43e97b;
+      background: #eafff3;
+    }
+    .player-avatar span {
+      font-size: 0.9rem;
+      margin-left: 4px;
+    }
+
     /* Responsive */
     @media (max-width: 600px) {
       h1 { font-size: 1.4rem; }
@@ -113,6 +221,9 @@
       ul#playerList li { font-size: 0.95rem; padding: 5px 8px; }
       button { font-size: 1rem; padding: 10px 12px; }
       #controls { gap: 6px; }
+      #table-area { width: 220px; height: 220px; }
+      #table { width: 120px; height: 120px; }
+      .player-avatar { width: 32px; height: 32px; font-size: 1.1rem; }
     }
   </style>
 </head>
@@ -123,6 +234,20 @@
   <ul id="playerList"></ul>
   <div id="controls">
     <button id="startRoundBtn" class="start-btn" style="display: none;">🚀 Bắt đầu vòng chơi</button>
+  </div>
+
+  <div id="challenge-area">
+    <div id="challenge-card" class="card hidden">
+      <div class="card-content"></div>
+      <div class="card-actions">
+        <button id="rejectBtn" class="btn-red">Bỏ qua</button>
+        <button id="acceptBtn" class="btn-green">Chấp nhận</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="table-area">
+    <div id="table"></div>
   </div>
 
   <script>
@@ -148,28 +273,19 @@
 
     document.getElementById("roomCode").textContent = roomCode;
     let currentHost = null;
+    let currentAsked = null; // Lưu người bị hỏi để highlight
 
     socket.on("connect", () => {
-      console.log("✅ Socket connected", socket.id);
       socket.emit("tod-join", { roomCode, player: playerName });
     });
 
     socket.on("tod-joined", ({ players, host }) => {
-      const startBtn = document.getElementById("startRoundBtn");
       currentHost = host;
-
-      console.log("--- Debugging Host Status ---");
-      console.log("1. Player Name (Client):", playerName);
-      console.log("2. Host Name (From Server):", currentHost);
-      console.log("3. Host Name (From URL):", hostFromURL);
-      console.log("4. Is current player host (playerName === currentHost)?", playerName === currentHost);
-      console.log("5. List of players in room (from server):", players);
-      console.log("-----------------------------");
-
       document.getElementById("playerList").innerHTML = players
         .map((p, i) => `<li>${i === 0 ? "🎲 " : "👤 "}${p.name}</li>`)
         .join("");
       document.getElementById("status").textContent = `Người chơi: ${players.length}`;
+      renderTable(players, currentAsked);
 
       // Chỉ host mới được hiện nút bắt đầu
       if (playerName === host) {
@@ -180,6 +296,51 @@
       }
     });
 
+    function renderTable(players, askedName) {
+      const table = document.getElementById("table-area");
+      table.querySelectorAll(".player-avatar").forEach(e => e.remove());
+      const n = players.length;
+      const R = 140;
+      players.forEach((p, i) => {
+        const angle = (2 * Math.PI * i) / n - Math.PI / 2;
+        const x = 170 + R * Math.cos(angle) - 27;
+        const y = 170 + R * Math.sin(angle) - 27;
+        const div = document.createElement("div");
+        div.className = "player-avatar" +
+          (i === 0 ? " host" : "") +
+          (p.name === playerName ? " you" : "") +
+          (askedName && p.name === askedName ? " asked" : "");
+        div.style.left = x + "px";
+        div.style.top = y + "px";
+        div.innerHTML = `
+          ${askedName && p.name === askedName ? '<div class="arrow-up"></div>' : ''}
+          <img src="https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(p.name)}" width="36" height="36" style="border-radius:50%">
+          <span>${p.name}</span>
+        `;
+        table.appendChild(div);
+      });
+    }
+
+    // Thêm CSS cho mũi tên chỉ người bị hỏi
+    const style = document.createElement('style');
+    style.innerHTML = `
+      .player-avatar.asked {
+        box-shadow: 0 0 0 4px #ffb34799, 0 2px 8px #0002;
+        z-index: 10;
+      }
+      .arrow-up {
+        width: 0; height: 0;
+        border-left: 12px solid transparent;
+        border-right: 12px solid transparent;
+        border-bottom: 18px solid #ffb347;
+        margin: 0 auto 2px auto;
+        position: absolute;
+        top: -22px; left: 50%; transform: translateX(-50%);
+        z-index: 11;
+      }
+    `;
+    document.head.appendChild(style);
+
     socket.on("tod-your-turn", ({ player }) => {
       const isYou = player === playerName;
       document.getElementById("status").textContent =
@@ -187,10 +348,13 @@
           ? "👉 Đến lượt bạn! Chọn Truth hoặc Dare"
           : `⏳ ${player} đang chọn Truth hoặc Dare...`;
 
-      const controls = document.getElementById("controls");
-      controls.innerHTML = "";
+      document.getElementById("controls").innerHTML = "";
 
-      if (isYou) {
+      currentAsked = null; // Chưa có ai bị hỏi
+      // Hiện spinner khi chờ người khác chọn
+      if (!isYou) {
+        document.getElementById("controls").innerHTML = `<div class="spinner"></div>`;
+      } else {
         ["Truth", "Dare"].forEach(choice => {
           const btn = document.createElement("button");
           btn.textContent = choice;
@@ -200,35 +364,67 @@
             player: playerName,
             choice: choice.toLowerCase()
           });
-          controls.appendChild(btn);
+          document.getElementById("controls").appendChild(btn);
         });
-      } else {
-        // Hiện spinner khi chờ người khác chọn
-        controls.innerHTML = `<div class="spinner"></div>`;
       }
     });
 
-    socket.on("tod-question", ({ player, choice, question }) => {
-      document.getElementById("status").textContent =
-        `${player} chọn ${choice.toUpperCase()}: ${question}`;
-      const controls = document.getElementById("controls");
+    const card = document.getElementById("challenge-card");
+    const cardContent = card.querySelector(".card-content");
+    const acceptBtn = document.getElementById("acceptBtn");
+    const rejectBtn = document.getElementById("rejectBtn");
 
-      // Nếu bạn là người bị hỏi thì không hiện nút vote
-      if (playerName === player) {
-        controls.innerHTML = "";
+    let startX = null;
+
+    function showCard(content) {
+      cardContent.textContent = content;
+      card.classList.remove("hidden", "swipe-left", "swipe-right");
+    }
+
+    function hideCard(direction) {
+      card.classList.add(direction);
+      setTimeout(() => {
+        card.classList.add("hidden");
+        card.classList.remove("swipe-left", "swipe-right");
+      }, 400);
+    }
+
+    // Swipe logic
+    card.addEventListener("touchstart", e => {
+      startX = e.touches[0].clientX;
+    });
+    card.addEventListener("touchend", e => {
+      if (startX === null) return;
+      const endX = e.changedTouches[0].clientX;
+      if (endX - startX > 80) {
+        acceptBtn.click();
+      } else if (startX - endX > 80) {
+        rejectBtn.click();
+      }
+      startX = null;
+    });
+
+    // Button logic
+    acceptBtn.onclick = () => {
+      hideCard("swipe-right");
+      socket.emit("tod-vote", { roomCode, player: playerName, vote: "accept" });
+    };
+    rejectBtn.onclick = () => {
+      hideCard("swipe-left");
+      socket.emit("tod-vote", { roomCode, player: playerName, vote: "reject" });
+    };
+
+    // Khi nhận thử thách mới
+    socket.on("tod-question", ({ player, choice, question }) => {
+      currentAsked = player;
+      renderTable(
+        Array.from(document.querySelectorAll("#playerList li")).map(li => ({ name: li.textContent.replace(/^(\W+\s)?/, "") })),
+        currentAsked
+      );
+      if (playerName !== player) {
+        showCard(`${player} chọn ${choice.toUpperCase()}: ${question}`);
       } else {
-        controls.innerHTML = `
-          <button id="acceptBtn" class="btn-green">Chấp nhận</button>
-          <button id="rejectBtn" class="btn-red">Không đồng ý</button>
-        `;
-        document.getElementById("acceptBtn").onclick = () => {
-          socket.emit("tod-vote", { roomCode, player: playerName, vote: "accept" });
-          controls.innerHTML = "Đã vote!";
-        };
-        document.getElementById("rejectBtn").onclick = () => {
-          socket.emit("tod-vote", { roomCode, player: playerName, vote: "reject" });
-          controls.innerHTML = "Đã vote!";
-        };
+        card.classList.add("hidden");
       }
     });
 
@@ -251,7 +447,7 @@
 
     socket.on("tod-join-failed", ({ reason }) => {
       alert(reason || "Không thể vào phòng này!");
-      window.location.href = "/"; // hoặc đường dẫn về trang chủ của bạn
+      window.location.href = "/";
     });
   </script>
 </body>
