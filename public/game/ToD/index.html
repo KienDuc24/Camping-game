@@ -170,6 +170,11 @@
     socket.on("tod-error", (msg) => {
       alert("❌ " + msg);
     });
+
+    socket.on("tod-join-failed", ({ reason }) => {
+      alert(reason || "Không thể vào phòng này!");
+      window.location.href = "/"; // hoặc đường dẫn về trang chủ của bạn
+    });
   </script>
 </body>
 </html>
