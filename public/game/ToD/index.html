@@ -116,40 +116,31 @@
       document.getElementById("status").textContent =
         `${player} chọn ${choice.toUpperCase()}: ${question}`;
       const controls = document.getElementById("controls");
-      controls.innerHTML = "";
-
-      if (player !== playerName) {
-        ["✔️ Đồng ý", "❌ Không hợp lệ"].forEach((label, i) => {
-          const vote = i === 0 ? "V" : "X";
-          const btn = document.createElement("button");
-          btn.textContent = label;
-          btn.className = "vote-btn";
-          btn.onclick = () => socket.emit("tod-vote", {
-            roomCode,
-            player: playerName,
-            vote
-          });
-          controls.appendChild(btn);
-        });
-      }
+      controls.innerHTML = `
+        <button id="acceptBtn" class="btn-green">Chấp nhận</button>
+        <button id="rejectBtn" class="btn-red">Không đồng ý</button>
+      `;
+      document.getElementById("acceptBtn").onclick = () => {
+        socket.emit("tod-vote", { roomCode, player: playerName, vote: "accept" });
+        controls.innerHTML = "Đã vote!";
+      };
+      document.getElementById("rejectBtn").onclick = () => {
+        socket.emit("tod-vote", { roomCode, player: playerName, vote: "reject" });
+        controls.innerHTML = "Đã vote!";
+      };
     });
 
-    socket.on("tod-voted", ({ player, vote }) => {
-      document.getElementById("status").textContent = `${player} đã vote: ${vote}`;
+    socket.on("tod-voted", ({ player, vote, acceptCount, voted, total }) => {
+      document.getElementById("status").textContent =
+        `${player} đã vote: ${vote === "accept" ? "Chấp nhận" : "Không đồng ý"} | ` +
+        `Chấp nhận: ${acceptCount}/${total} | Đã vote: ${voted}/${total}`;
     });
 
-    socket.on("tod-result", ({ message }) => {
-      document.getElementById("status").textContent = message;
-
-      const controls = document.getElementById("controls");
-      controls.innerHTML = "";
-
-      if (playerName === currentHost) {
-        const nextBtn = document.createElement("button");
-        nextBtn.textContent = "➡️ Vòng tiếp theo";
-        nextBtn.className = "start-btn";
-        nextBtn.onclick = () => socket.emit("tod-start-round", { roomCode });
-        controls.appendChild(nextBtn);
+    socket.on("tod-result", ({ result }) => {
+      if (result === "accepted") {
+        document.getElementById("status").textContent = "✅ Đa số chấp nhận! Đến lượt tiếp theo...";
+      } else {
+        document.getElementById("status").textContent = "❌ Không đủ chấp nhận, phải trả lời lại!";
       }
     });
 

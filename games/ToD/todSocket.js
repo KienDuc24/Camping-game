@@ -83,12 +83,50 @@ module.exports = (socket, io, rooms) => {
     }
   });
 
-  socket.on("tod-vote", ({ roomCode, player, vote }) => {
-    console.log(`✅ ${player} vote ${vote} trong ${roomCode}`);
-    io.to(roomCode).emit("tod-voted", { player, vote });
+  socket.on("tod-question", ({ player, choice, question }) => {
+    // ... gửi câu hỏi ...
+    rooms[roomCode].votes = []; // reset votes cho round mới
+  });
 
-    // Optional: emit "tod-result" if vote ratio logic is implemented
-    // io.to(roomCode).emit("tod-result", { message: "✅ Chấp nhận!" });
+  socket.on("tod-vote", ({ roomCode, player, vote }) => {
+    const room = rooms[roomCode];
+    if (!room) return;
+    if (!room.votes) room.votes = [];
+    if (!room.votes.some(v => v.player === player)) {
+      room.votes.push({ player, vote });
+    }
+    const acceptCount = room.votes.filter(v => v.vote === "accept").length;
+    const total = room.players.length;
+    const voted = room.votes.length;
+
+    io.to(roomCode).emit("tod-voted", {
+      player, vote,
+      acceptCount, voted, total
+    });
+
+    // Nếu tất cả đã vote
+    if (voted === total) {
+      if (acceptCount >= Math.ceil(total / 2)) {
+        io.to(roomCode).emit("tod-result", { result: "accepted" });
+        // Đến lượt tiếp theo
+        room.currentIndex = (room.currentIndex + 1) % room.players.length;
+        const nextPlayer = room.players[room.currentIndex].name;
+        setTimeout(() => {
+          io.to(roomCode).emit("tod-your-turn", { player: nextPlayer });
+        }, 2000);
+      } else {
+        io.to(roomCode).emit("tod-result", { result: "rejected" });
+        // Người chơi phải trả lời lại (gửi lại câu hỏi)
+        setTimeout(() => {
+          io.to(roomCode).emit("tod-question", {
+            player: room.players[room.currentIndex].name,
+            choice: room.lastChoice,
+            question: room.lastQuestion
+          });
+          room.votes = [];
+        }, 2000);
+      }
+    }
   });
 
 
