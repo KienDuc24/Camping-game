@@ -22,7 +22,8 @@ async function getRandomQuestion(type) {
   await doc.loadInfo();
   const sheet = doc.sheetsByIndex[0];
   const rows = await sheet.getRows();
-  // Dùng đúng tên header, viết hoa y như trên sheet
+  console.log("Row keys:", Object.keys(rows[0])); // <-- Thêm dòng này
+
   const col = type === "truth" ? "TRUTH" : "DARE";
   const questions = rows
     .map(row => row[col])
