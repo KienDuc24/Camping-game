@@ -49,14 +49,16 @@
       gap: 4px;
     }
     .vote-info {
-      font-size: 1rem;
-      color: #1a7f4f;
-      font-weight: 500;
+      font-size: 1.08rem;
+      color: #e67e22;
+      font-weight: 700;
       margin-top: 2px;
-      background: #eafff3;
+      background: #fffbe6;
       border-radius: 6px;
-      padding: 2px 10px;
+      padding: 2px 12px;
       display: inline-block;
+      letter-spacing: 1px;
+      box-shadow: 0 1px 4px #0001;
     }
     ul#playerList {
       list-style: none;
@@ -110,18 +112,27 @@
       color: #fff;
     }
     .choice-btn {
-      background: linear-gradient(90deg, #43c6ac 0%, #191654 100%);
-      color: #fff;
+      font-size: 1.15rem;
+      padding: 12px 32px;
+      margin: 0 12px;
+      border-radius: 12px;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      transition: filter 0.2s, box-shadow 0.2s;
+      box-shadow: 0 2px 8px #0002;
     }
     .choice-btn.truth {
       background: linear-gradient(90deg, #a8edea 0%, #fed6e3 100%);
       color: #222;
+      border: 2px solid #43c6ac;
     }
     .choice-btn.dare {
       background: linear-gradient(90deg, #f857a6 0%, #ff5858 100%);
       color: #fff;
+      border: 2px solid #f857a6;
     }
-    .choice-btn:hover, .btn-green:hover, .btn-red:hover, .start-btn:hover {
+    .choice-btn:hover {
       filter: brightness(1.08);
       box-shadow: 0 4px 16px #0002;
     }
@@ -136,95 +147,37 @@
     }
     @keyframes spin { 100% { transform: rotate(360deg); } }
 
-    /* Challenge Card Styles */
-    #challenge-area {
-      position: relative;
-      width: 320px;
-      height: 220px;
-      margin: 0 auto 20px auto;
-      perspective: 1000px;
-    }
-    .card {
-      position: absolute;
-      left: 50%; top: 50%;
-      transform: translate(-50%, -50%);
-      width: 320px;
-      height: 220px;
-      background: #fff;
-      border-radius: 18px;
-      box-shadow: 0 8px 32px #0003;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      align-items: center;
-      z-index: 10;
-      padding: 24px 18px 18px 18px;
-      font-size: 1.15rem;
-      border: 3px solid #43c6ac;
-    }
-    .card.hidden {
-      display: none;
-    }
-    .card.swipe-left {
-      transform: translateX(-400px) rotate(-20deg);
-      opacity: 0;
-    }
-    .card.swipe-right {
-      transform: translateX(400px) rotate(20deg);
-      opacity: 0;
-    }
-    .card-content {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      font-size: 1.2rem;
-      color: #222;
-    }
-    .card-actions {
-      display: flex;
-      gap: 18px;
-      margin-top: 18px;
-    }
-
-    /* Table Styles */
+    /* Campfire Table Styles */
     #table-area {
       position: relative;
-      width: 98vw;
-      max-width: 600px;
+      width: 340px;
       height: 340px;
       margin: 0 auto 18px auto;
       display: flex;
       align-items: center;
       justify-content: center;
     }
-    #table {
+    #campfire {
       position: absolute;
-      width: 420px;
-      height: 220px;
       left: 50%; top: 50%;
       transform: translate(-50%, -50%);
-      background: url('https://pngimg.com/uploads/table/table_PNG17303.png') no-repeat center/contain;
-      border-radius: 50% / 40%;
-      box-shadow: 0 8px 32px #0003, 0 0 0 12px #fff8;
-      z-index: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      width: 110px;
+      height: 110px;
+      z-index: 2;
+      pointer-events: none;
+      background: none;
     }
-    #table th, #table td {
-      padding: 12px 16px;
-      text-align: center;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      background: #fff;
-      color: #333;
-      font-size: 1rem;
+    .campfire-img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      pointer-events: none;
+      filter: drop-shadow(0 0 16px #ffb34788);
+      animation: campfire-flicker 1.2s infinite alternate;
     }
-    #table th {
-      background: #f4f4f9;
-      font-weight: 600;
+    @keyframes campfire-flicker {
+      0% { filter: drop-shadow(0 0 12px #ffb34788);}
+      100% { filter: drop-shadow(0 0 24px #ffb347cc);}
     }
     .player-avatar {
       position: absolute;
@@ -238,34 +191,21 @@
       justify-content: center;
       font-size: 2rem;
       transition: border 0.2s;
+      z-index: 3;
     }
     .player-avatar.you {
       border: 3px solid #43e97b;
       background: #eafff3;
     }
-    .player-avatar span {
-      font-size: 0.9rem;
-      margin-left: 4px;
-    }
-
-    /* Responsive */
-    @media (max-width: 600px) {
-      h1 { font-size: 1.4rem; }
-      #status { font-size: 1rem; padding: 6px 8px; }
-      ul#playerList li { font-size: 0.95rem; padding: 5px 8px; }
-      button { font-size: 1rem; padding: 10px 12px; }
-      #controls { gap: 6px; }
-      #table-area { height: 180px; }
-      #table { width: 180px; height: 90px; }
-      .player-avatar { width: 32px; height: 32px; font-size: 1.1rem; }
-      .card { width: 90vw; min-width: 180px; height: 140px; font-size: 1rem; }
-    }
-
     .player-avatar.asked {
       box-shadow: 0 0 0 4px #ffb34799, 0 2px 8px #0002;
       z-index: 10;
     }
-    .question-mark {
+    .player-avatar span {
+      font-size: 0.9rem;
+      margin-left: 4px;
+    }
+    .arrow-up {
       width: 0; height: 0;
       border-left: 12px solid transparent;
       border-right: 12px solid transparent;
@@ -274,73 +214,72 @@
       position: absolute;
       top: -22px; left: 50%; transform: translateX(-50%);
       z-index: 11;
-      animation: bounce 1s infinite;
-    }
-    @keyframes bounce {
-      0%, 100% { transform: translateX(-50%) translateY(0);}
-      50% { transform: translateX(-50%) translateY(-10px);}
     }
 
     /* Popup Styles */
     .question-popup {
       position: fixed;
       top: 50%; left: 50%; transform: translate(-50%, -50%);
-      min-width: 180px;
+      min-width: 220px;
       max-width: 90vw;
       z-index: 100;
-      padding: 18px 28px;
+      padding: 22px 32px;
       border-radius: 18px;
       font-size: 1.15rem;
+      font-weight: 600;
+      box-shadow: 0 4px 24px #0004;
+      text-align: center;
       background: #fff;
-      box-shadow: 0 4px 16px #0002;
+      border: 2px solid #43c6ac;
       display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
     }
     .question-popup.active {
-      display: block;
+      display: flex;
+      animation: popupIn 0.2s;
     }
-    .question-popup h2 {
-      margin: 0 0 12px 0;
-      font-size: 1.25rem;
-      color: #333;
-      text-align: center;
+    @keyframes popupIn {
+      from { opacity: 0; transform: translate(-50%, -60%) scale(0.95);}
+      to { opacity: 1; transform: translate(-50%, -50%) scale(1);}
     }
-    .question-popup p {
-      margin: 0 0 18px 0;
-      line-height: 1.4;
-      color: #555;
-      text-align: center;
-    }
-    .question-popup button {
-      width: 100%;
-      padding: 10px 0;
+    .popup-close {
+      position: absolute;
+      top: 8px; right: 12px;
+      background: none;
       border: none;
-      border-radius: 8px;
+      font-size: 1.5rem;
+      color: #888;
       cursor: pointer;
-      font-size: 1rem;
+      transition: color 0.2s;
+    }
+    .popup-close:hover { color: #222; }
+    .popup-question {
+      font-size: 1.15rem;
+      margin: 0 0 8px 0;
+      color: #222;
       font-weight: 600;
-      transition: background 0.3s, transform 0.2s;
     }
-    .question-popup button:hover {
-      background: #f0f0f0;
+    .popup-player {
+      font-size: 1rem;
+      color: #43c6ac;
+      font-weight: 700;
+      margin-bottom: 8px;
     }
-    .question-popup .btn-confirm {
-      background: #43e97b;
-      color: #fff;
-    }
-    .question-popup .btn-confirm:hover {
-      background: #38f9d7;
-    }
-    .question-popup .btn-cancel {
-      background: #ff5858;
-      color: #fff;
-    }
-    .question-popup .btn-cancel:hover {
-      background: #f09819;
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      #table-area { width: 180px; height: 180px; }
+      #campfire { width: 60px; height: 60px; }
+      .player-avatar { width: 32px; height: 32px; font-size: 1.1rem; }
+      .question-popup { min-width: 120px; padding: 12px 8px; font-size: 1rem; }
+      .vote-info { font-size: 0.95rem; padding: 2px 6px; }
     }
   </style>
 </head>
 <body>
-  <h1 style="font-size:1.3rem;letter-spacing:2px;">🏕️ Truth or Dare</h1>
+  <h1>🏕️ Truth or Dare</h1>
   <p>Phòng: <span id="roomCode"></span></p>
   <div id="status">
     <span id="status-text">⏳ Đang chờ...</span>
@@ -362,7 +301,17 @@
   </div>
 
   <div id="table-area">
+    <div id="campfire">
+      <img class="campfire-img" src="https://cdn.pixabay.com/photo/2013/07/13/12/46/campfire-146545_1280.png" alt="Campfire">
+    </div>
     <div id="table"></div>
+  </div>
+
+  <!-- Popup thử thách -->
+  <div id="question-popup" class="question-popup">
+    <button class="popup-close" onclick="hidePopup()">&times;</button>
+    <div class="popup-player" id="popup-player"></div>
+    <div class="popup-question" id="popup-question"></div>
   </div>
 
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
@@ -374,7 +323,6 @@
 
     const urlParams = new URLSearchParams(window.location.search);
     const roomCode = urlParams.get("code");
-    const hostFromURL = urlParams.get("host");
     let playerName = sessionStorage.getItem("playerName");
     if (!playerName) {
       playerName = prompt("Vui lòng nhập tên của bạn:");
@@ -390,6 +338,8 @@
     document.getElementById("roomCode").textContent = roomCode;
     let currentHost = null;
     let currentAsked = null; // Lưu người bị hỏi để highlight
+    let lastQuestion = "";
+    let lastAsked = "";
 
     socket.on("connect", () => {
       socket.emit("tod-join", { roomCode, player: playerName });
@@ -400,7 +350,8 @@
       document.getElementById("playerList").innerHTML = players
         .map((p, i) => `<li>${i === 0 ? "🎲 " : "👤 "}${p.name}</li>`)
         .join("");
-      document.getElementById("status").textContent = `Người chơi: ${players.length}`;
+      document.getElementById("status-text").textContent = `Người chơi: ${players.length}`;
+      document.getElementById("vote-info").style.display = "none";
       renderTable(players, currentAsked);
 
       // Chỉ host mới được hiện nút bắt đầu
@@ -418,55 +369,53 @@
       const n = players.length;
       // Responsive bán kính
       const isMobile = window.innerWidth <= 600;
-      const R = isMobile ? 60 : 140;
+      const R = isMobile ? 60 : 120;
       const center = isMobile ? 90 : 170;
       players.forEach((p, i) => {
         const angle = (2 * Math.PI * i) / n - Math.PI / 2;
-        const x = center + R * Math.cos(angle) - (isMobile ? 16 : 27);
-        const y = center + R * Math.sin(angle) - (isMobile ? 16 : 27);
+        const x = center + R * Math.cos(angle) - (isMobile ? 16 : 32);
+        const y = center + R * Math.sin(angle) - (isMobile ? 16 : 32);
         const div = document.createElement("div");
         div.className = "player-avatar" +
-          (i === 0 ? " host" : "") +
           (p.name === playerName ? " you" : "") +
           (askedName && p.name === askedName ? " asked" : "");
         div.style.left = x + "px";
         div.style.top = y + "px";
         div.innerHTML = `
           ${askedName && p.name === askedName ? '<div class="arrow-up"></div>' : ''}
-          <img src="https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(p.name)}" width="${isMobile ? 24 : 36}" height="${isMobile ? 24 : 36}" style="border-radius:50%">
+          <img src="https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(p.name)}" width="${isMobile ? 24 : 48}" height="${isMobile ? 24 : 48}" style="border-radius:50%">
           <span>${p.name}</span>
         `;
         table.appendChild(div);
       });
     }
 
-    // Thêm CSS cho mũi tên chỉ người bị hỏi
-    const style = document.createElement('style');
-    style.innerHTML = `
-      .player-avatar.asked {
-        box-shadow: 0 0 0 4px #ffb34799, 0 2px 8px #0002;
-        z-index: 10;
-      }
-      .arrow-up {
-        width: 0; height: 0;
-        border-left: 12px solid transparent;
-        border-right: 12px solid transparent;
-        border-bottom: 18px solid #ffb347;
-        margin: 0 auto 2px auto;
-        position: absolute;
-        top: -22px; left: 50%; transform: translateX(-50%);
-        z-index: 11;
-      }
-    `;
-    document.head.appendChild(style);
+    // Popup thử thách
+    function showPopup(player, question) {
+      document.getElementById("popup-player").textContent = player ? `Người bị hỏi: ${player}` : "";
+      document.getElementById("popup-question").textContent = question;
+      document.getElementById("question-popup").classList.add("active");
+    }
+    function hidePopup() {
+      document.getElementById("question-popup").classList.remove("active");
+    }
+
+    // Mini popup icon (hiện lại popup)
+    function showMiniPopup() {
+      if (!lastQuestion) return;
+      showPopup(lastAsked, lastQuestion);
+    }
+
+    // Thêm nút mini popup nếu muốn (bạn có thể thêm vào HTML nếu thích)
+    // <div class="question-mini" onclick="showMiniPopup()" title="Xem lại thử thách">?</div>
 
     socket.on("tod-your-turn", ({ player }) => {
       const isYou = player === playerName;
-      document.getElementById("status").textContent =
+      document.getElementById("status-text").textContent =
         isYou
-          ? "👉 Đến lượt bạn! Chọn Truth hoặc Dare"
-          : `⏳ ${player} đang chọn Truth hoặc Dare...`;
-
+          ? "👉 Đến lượt bạn! Chọn Thật hoặc Thách"
+          : `⏳ ${player} đang chọn Thật hay Thách...`;
+      document.getElementById("vote-info").style.display = "none";
       document.getElementById("controls").innerHTML = "";
 
       currentAsked = null; // Chưa có ai bị hỏi
@@ -474,17 +423,25 @@
       if (!isYou) {
         document.getElementById("controls").innerHTML = `<div class="spinner"></div>`;
       } else {
-        ["Truth", "Dare"].forEach(choice => {
-          const btn = document.createElement("button");
-          btn.textContent = choice;
-          btn.className = "choice-btn";
-          btn.onclick = () => socket.emit("tod-choice", {
-            roomCode,
-            player: playerName,
-            choice: choice.toLowerCase()
-          });
-          document.getElementById("controls").appendChild(btn);
+        // Nút Thật/Thách đẹp
+        const btnTruth = document.createElement("button");
+        btnTruth.textContent = "Thật";
+        btnTruth.className = "choice-btn truth";
+        btnTruth.onclick = () => socket.emit("tod-choice", {
+          roomCode,
+          player: playerName,
+          choice: "truth"
         });
+        const btnDare = document.createElement("button");
+        btnDare.textContent = "Thách";
+        btnDare.className = "choice-btn dare";
+        btnDare.onclick = () => socket.emit("tod-choice", {
+          roomCode,
+          player: playerName,
+          choice: "dare"
+        });
+        document.getElementById("controls").appendChild(btnTruth);
+        document.getElementById("controls").appendChild(btnDare);
       }
     });
 
@@ -536,11 +493,14 @@
     // Khi nhận thử thách mới
     socket.on("tod-question", ({ player, choice, question }) => {
       currentAsked = player;
+      lastAsked = player;
+      lastQuestion = `${player} chọn ${choice === "truth" ? "Thật" : "Thách"}: ${question}`;
       renderTable(
         Array.from(document.querySelectorAll("#playerList li")).map(li => ({ name: li.textContent.replace(/^(\W+\s)?/, "") })),
         currentAsked
       );
-      showCard(`${player} chọn ${choice.toUpperCase()}: ${question}`);
+      showCard(lastQuestion);
+      showPopup(player, lastQuestion);
 
       // Ẩn nút vote nếu là người bị hỏi
       if (playerName === player) {
@@ -552,16 +512,19 @@
       }
     });
 
+    // Hiện số vote chấp thuận/trên tổng vote
     socket.on("tod-voted", ({ acceptCount, voted, total }) => {
-      document.getElementById("status").textContent =
-        `Chấp nhận: ${acceptCount}/${total} | Đã vote: ${voted}/${total}`;
+      const voteInfo = document.getElementById("vote-info");
+      voteInfo.textContent = `Chấp thuận: ${acceptCount}/${total} | Đã vote: ${voted}/${total}`;
+      voteInfo.style.display = "";
     });
 
     socket.on("tod-result", ({ result }) => {
+      document.getElementById("vote-info").style.display = "none";
       if (result === "accepted") {
-        document.getElementById("status").textContent = "✅ Đa số chấp nhận! Đến lượt tiếp theo...";
+        document.getElementById("status-text").textContent = "✅ Đa số chấp nhận! Đến lượt tiếp theo...";
       } else {
-        document.getElementById("status").textContent = "❌ Không đủ chấp nhận, phải trả lời lại!";
+        document.getElementById("status-text").textContent = "❌ Không đủ chấp nhận, phải trả lời lại!";
       }
     });
 
@@ -572,6 +535,14 @@
     socket.on("tod-join-failed", ({ reason }) => {
       alert(reason || "Không thể vào phòng này!");
       window.location.href = "/";
+    });
+
+    // Ẩn popup khi bấm ra ngoài
+    document.addEventListener("click", function(e) {
+      const popup = document.getElementById("question-popup");
+      if (popup.classList.contains("active") && !popup.contains(e.target) && !e.target.classList.contains("card-content")) {
+        hidePopup();
+      }
     });
   </script>
 </body>
