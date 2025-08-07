@@ -84,6 +84,9 @@ module.exports = (socket, io, rooms) => {
   socket.on("tod-choice", async ({ roomCode, player, choice }) => {
     try {
       const question = await getRandomQuestion(choice);
+      // Lưu lại lựa chọn và câu hỏi cuối cùng
+      rooms[roomCode].lastChoice = choice;
+      rooms[roomCode].lastQuestion = question;
       io.to(roomCode).emit("tod-question", { player, choice, question });
     } catch (e) {
       console.error("Lỗi lấy câu hỏi:", e);
@@ -132,7 +135,7 @@ module.exports = (socket, io, rooms) => {
           room.lastQuestion = question;
           io.to(roomCode).emit("tod-question", {
             player: room.players[room.currentIndex].name,
-            choice: lastChoice,
+            choice: lastChoice, // luôn có giá trị
             question
           });
         }, 2000);
