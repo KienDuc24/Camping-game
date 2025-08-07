@@ -87,16 +87,12 @@ module.exports = (socket, io, rooms) => {
       // Lưu lại lựa chọn và câu hỏi cuối cùng
       rooms[roomCode].lastChoice = choice;
       rooms[roomCode].lastQuestion = question;
+      rooms[roomCode].votes = []; // <-- Reset votes tại đây!
       io.to(roomCode).emit("tod-question", { player, choice, question });
     } catch (e) {
       console.error("Lỗi lấy câu hỏi:", e);
       io.to(roomCode).emit("tod-question", { player, choice, question: "Không lấy được câu hỏi!" });
     }
-  });
-
-  socket.on("tod-question", ({ player, choice, question }) => {
-    // ... gửi câu hỏi ...
-    rooms[roomCode].votes = []; // reset votes cho round mới
   });
 
   socket.on("tod-vote", ({ roomCode, player, vote }) => {
@@ -123,7 +119,7 @@ module.exports = (socket, io, rooms) => {
       if (acceptCount >= Math.ceil(total / 2)) {
         io.to(roomCode).emit("tod-result", { result: "accepted" });
         room.currentIndex = (room.currentIndex + 1) % room.players.length;
-        room.votes = [];
+        // Không reset votes ở đây!
         const nextPlayer = room.players[room.currentIndex].name;
         setTimeout(() => {
           io.to(roomCode).emit("tod-your-turn", { player: nextPlayer });
@@ -132,6 +128,7 @@ module.exports = (socket, io, rooms) => {
         io.to(roomCode).emit("tod-result", { result: "rejected" });
         // Random lại câu hỏi mới
         setTimeout(async () => {
+          // Reset votes tại đây!
           room.votes = [];
           const lastChoice = room.lastChoice;
           const question = await getRandomQuestion(lastChoice);
@@ -145,61 +142,4 @@ module.exports = (socket, io, rooms) => {
       }
     }
   });
-
-
-  socket.on("tod-next", ({ roomCode }) => {
-    const room = rooms[roomCode];
-    if (!room) return;
-    room.currentIndex = (room.currentIndex + 1) % room.length;
-    const currentPlayer = room[room.currentIndex].name;
-    io.to(roomCode).emit("tod-your-turn", { player: currentPlayer });
-  });
-
-  socket.on("tod-your-turn", ({ player }) => {
-    const isYou = player === playerName;
-    document.getElementById("status").textContent = isYou
-      ? "👉 Đến lượt bạn! Ấn QUAY để chọn Truth hay Dare"
-      : `⏳ ${player} đang quay vòng...`;
-
-    const controls = document.getElementById("controls");
-    controls.innerHTML = "";
-
-    if (isYou) {
-      const spinBtn = document.createElement("button");
-      spinBtn.textContent = "🎯 Quay";
-      spinBtn.className = "choice-btn";
-      spinBtn.onclick = () => {
-        // Hiện vòng quay (có thể dùng canvas hoặc ảnh động)
-        showSpinner().then(result => {
-          socket.emit("tod-choice", {
-            roomCode,
-            player: playerName,
-            choice: result // "truth" hoặc "dare"
-          });
-        });
-      };
-      controls.appendChild(spinBtn);
-    }
-  });
-
-  socket.on("tod-question", ({ player, choice, question }) => {
-    document.getElementById("status").textContent =
-      `${player} chọn ${choice.toUpperCase()}: ${question}`;
-    document.getElementById("controls").innerHTML = "";
-  });
-
-  // Hàm showSpinner trả về Promise<"truth"|"dare">
-  function showSpinner() {
-    return new Promise(resolve => {
-      // Hiển thị vòng quay, sau 2s random truth/dare
-      const spinner = document.createElement("div");
-      spinner.innerHTML = `<img src="spinner.gif" style="width:120px">`;
-      document.getElementById("controls").appendChild(spinner);
-      setTimeout(() => {
-        spinner.remove();
-        const result = Math.random() < 0.5 ? "truth" : "dare";
-        resolve(result);
-      }, 2000);
-    });
-  }
 };
