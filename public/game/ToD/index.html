@@ -79,14 +79,12 @@
         .join("");
       document.getElementById("status").textContent = `Người chơi: ${players.length}`;
 
-      if (playerName === currentHost) {
-        startBtn.style.display = "inline-block";
-        startBtn.onclick = () => {
-          console.log("🚀 Host starts the round");
-          socket.emit("tod-start-round", { roomCode });
-        };
+      // Chỉ host mới được hiện nút bắt đầu
+      if (playerName === host) {
+        document.getElementById("controls").innerHTML =
+          `<button class="btn-green" onclick="socket.emit('tod-start-round', { roomCode })">Bắt đầu vòng chơi</button>`;
       } else {
-        startBtn.style.display = "none";
+        document.getElementById("controls").innerHTML = "";
       }
     });
 
