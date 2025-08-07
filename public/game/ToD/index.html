@@ -210,31 +210,19 @@
       position: relative;
       animation: cute-blink 1.2s infinite alternate;
     }
-    .player-avatar.asked::after,
-    .player-avatar.asked-accepted::after,
-    .player-avatar.asked-retry::after {
-      content: "";
+    .player-avatar.asked::after {
+      content: "✨🥺";
       position: absolute;
-      top: -30px;
+      top: -18px;
       left: 50%;
       transform: translateX(-50%);
-      width: 32px;
-      height: 32px;
+      font-size: 1.3em;
       pointer-events: none;
-      background-size: contain;
-      background-repeat: no-repeat;
-      background-position: center;
       filter: drop-shadow(0 2px 6px #fff8);
-      z-index: 20;
     }
-    .player-avatar.asked::after {
-      background-image: url('https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExd2F2d3J6d3F3b2Z3b3Z2b2R2d3F3b2Z3b3Z2b2R2d3F3b2Z3/g9582DNuQppxC/giphy.gif'); /* cute waiting */
-    }
-    .player-avatar.asked-accepted::after {
-      background-image: url('https://media.giphy.com/media/111ebonMs90YLu/giphy.gif'); /* happy */
-    }
-    .player-avatar.asked-retry::after {
-      background-image: url('https://media.giphy.com/media/9Y5BbDSkSTiY8/giphy.gif'); /* sweat/cry */
+    @keyframes cute-blink {
+      0% { box-shadow: 0 0 0 6px #ffd580cc, 0 2px 16px #ffb34788, 0 0 24px #fff7; }
+      100% { box-shadow: 0 0 0 12px #ffd58088, 0 2px 24px #ffb347cc, 0 0 32px #fff9; }
     }
     .player-avatar span {
       font-size: 0.9rem;
