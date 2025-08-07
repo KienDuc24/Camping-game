@@ -63,7 +63,7 @@ io.on("connection", (socket) => {
 
   socket.on("disconnect", () => {
     for (const roomCode in rooms) {
-      const index = rooms[roomCode].findIndex(p => p.socketId === socket.id);
+      const index = rooms[roomCode].players.findIndex(p => p.socketId === socket.id);
       if (index !== -1) {
         rooms[roomCode].splice(index, 1);
         if (rooms[roomCode].length === 0) {

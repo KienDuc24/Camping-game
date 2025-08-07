@@ -18,13 +18,22 @@ const creds = {
 
 async function getRandomQuestion(type) {
   const doc = new GoogleSpreadsheet('1V9DHRD02AZTVp-jzHcJRFsY0-sxsPg_o3IW-uSYCx3o');
-  await doc.useServiceAccountAuth(creds);
+  await doc.useServiceAccountAuth({
+    client_email: creds.client_email,
+    private_key: creds.private_key,
+  });
   await doc.loadInfo();
   const sheet = doc.sheetsByIndex[0];
   const rows = await sheet.getRows();
-  console.log("Row keys:", Object.keys(rows[0])); // <-- Thêm dòng này
+  console.log("Row keys:", Object.keys(rows[0]));
 
-  const col = type === "truth" ? "TRUTH" : "DARE";
+  // Tìm key phù hợp bất kể viết hoa/thường hay dấu cách
+  const col = type === "truth"
+    ? Object.keys(rows[0]).find(k => k.trim().toUpperCase().startsWith("TRUTH"))
+    : Object.keys(rows[0]).find(k => k.trim().toUpperCase().startsWith("DARE"));
+
+  if (!col) throw new Error("Không tìm thấy cột câu hỏi phù hợp!");
+
   const questions = rows
     .map(row => row[col])
     .filter(q => typeof q === "string" && q.trim().length > 0);
