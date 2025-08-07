@@ -1,8 +1,11 @@
 module.exports = (socket, io, rooms) => {
   socket.on("tod-join", ({ roomCode, player }) => {
     if (!rooms[roomCode]) {
-      console.log(`❌ Room ${roomCode} không tồn tại khi join`);
-      return;
+      // Nếu phòng chưa tồn tại, tạo mới và set host là người đầu tiên
+      rooms[roomCode] = [{ name: player }];
+      console.log(`🆕 Tạo phòng mới ${roomCode} với host ${player}`);
+    } else if (!rooms[roomCode].some(p => p.name === player)) {
+      rooms[roomCode].push({ name: player });
     }
 
     console.log(`🎲 ToD: ${player} đã tham gia ${roomCode}`);
