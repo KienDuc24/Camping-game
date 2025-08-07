@@ -60,6 +60,8 @@
     });
 
     socket.on("tod-joined", ({ players, host }) => {
+      console.log(`📥 Server nhận tod-join: roomCode=${roomCode}, player=${player}, rooms=${JSON.stringify(rooms[roomCode])}`);
+        if (!rooms[roomCode]) return;
       currentHost = host; // Update the host variable from server data
       
       console.log("--- Debugging Host Status ---");
