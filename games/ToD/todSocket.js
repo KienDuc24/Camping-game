@@ -22,7 +22,7 @@ async function getRandomQuestion(type) {
   await doc.loadInfo();
   const sheet = doc.sheetsByIndex[0];
   const rows = await sheet.getRows();
-  const questions = rows.map(row => row[type === "truth" ? "A" : "B"]).filter(Boolean);
+  const questions = rows.map(row => row[type === "truth" ? "TRUTH" : "DARE"]).filter(Boolean);
   const random = questions[Math.floor(Math.random() * questions.length)];
   return random;
 }
@@ -56,8 +56,13 @@ module.exports = (socket, io, rooms) => {
   });
 
   socket.on("tod-choice", async ({ roomCode, player, choice }) => {
-    const question = await getRandomQuestion(choice);
-    io.to(roomCode).emit("tod-question", { player, choice, question });
+    try {
+      const question = await getRandomQuestion(choice);
+      io.to(roomCode).emit("tod-question", { player, choice, question });
+    } catch (e) {
+      console.error("Lỗi lấy câu hỏi:", e);
+      io.to(roomCode).emit("tod-question", { player, choice, question: "Không lấy được câu hỏi!" });
+    }
   });
 
   socket.on("tod-vote", ({ roomCode, player, vote }) => {
