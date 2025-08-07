@@ -204,8 +204,37 @@
       background: #eafff3;
     }
     .player-avatar.asked {
-      box-shadow: 0 0 0 4px #ffb34799, 0 2px 8px #0002;
-      z-index: 10;
+      box-shadow: 0 0 0 6px #ffd580cc, 0 2px 16px #ffb34788, 0 0 24px #fff7;
+      border: 3px solid #ffb347;
+      background: linear-gradient(135deg, #fffbe6 60%, #ffe0c3 100%);
+      position: relative;
+      animation: cute-blink 1.2s infinite alternate;
+    }
+    .player-avatar.asked::after,
+    .player-avatar.asked-accepted::after,
+    .player-avatar.asked-retry::after {
+      content: "";
+      position: absolute;
+      top: -30px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 32px;
+      height: 32px;
+      pointer-events: none;
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      filter: drop-shadow(0 2px 6px #fff8);
+      z-index: 20;
+    }
+    .player-avatar.asked::after {
+      background-image: url('https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExd2F2d3J6d3F3b2Z3b3Z2b2R2d3F3b2Z3b3Z2b2R2d3F3b2Z3/g9582DNuQppxC/giphy.gif'); /* cute waiting */
+    }
+    .player-avatar.asked-accepted::after {
+      background-image: url('https://media.giphy.com/media/111ebonMs90YLu/giphy.gif'); /* happy */
+    }
+    .player-avatar.asked-retry::after {
+      background-image: url('https://media.giphy.com/media/9Y5BbDSkSTiY8/giphy.gif'); /* sweat/cry */
     }
     .player-avatar span {
       font-size: 0.9rem;
@@ -365,6 +394,7 @@
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
   <script>
     let voteAccept = 0, voteTotal = 0;
+    let askedResult = ""; // "", "accepted", "retry"
     const socket = io("https://camping-game-production.up.railway.app", {
       transports: ["websocket"],
       secure: true
@@ -567,6 +597,7 @@
       lastAsked = player;
       lastType = choice;
       lastQuestion = `${player} chọn ${choice === "truth" ? "Sự thật" : "Thử thách"}: ${question}`;
+      askedResult = ""; // reset trạng thái khi có câu hỏi mới
       renderTable(
         Array.from(document.querySelectorAll("#playerList li")).map(li => ({ name: li.textContent.replace(/^(\W+\s)?/, "") })),
         currentAsked
@@ -600,9 +631,16 @@
       document.getElementById("vote-info").style.display = "none";
       if (result === "accepted") {
         document.getElementById("status-text").textContent = "✅ Đa số chấp nhận! Đến lượt tiếp theo...";
+        askedResult = "accepted";
       } else {
         document.getElementById("status-text").textContent = "❌ Không đủ chấp nhận, phải trả lời lại!";
+        askedResult = "retry";
       }
+      renderTable(
+        Array.from(document.querySelectorAll("#playerList li")).map(li => ({ name: li.textContent.replace(/^(\W+\s)?/, "") })),
+        currentAsked
+      );
+      renderQuestionBar();
     });
 
     socket.on("tod-error", (msg) => {
