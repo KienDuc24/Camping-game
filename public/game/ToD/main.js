@@ -240,48 +240,5 @@ socket.on("tod-voted", ({ acceptCount, voted, total }) => {
     `Đã vote: ${voted}/${total} | Chấp thuận: ${acceptCount}`;
 });
 
-socket.on("tod-vote", ({ roomCode, player, vote }) => {
-  const room = rooms[roomCode];
-  if (!room) return;
-  if (!room.votes) room.votes = [];
-  const currentAsked = room.players[room.currentIndex].name;
-  if (player === currentAsked) return; // BỎ QUA vote của người bị hỏi
 
-  if (!room.votes.some(v => v.player === player)) {
-    room.votes.push({ player, vote });
-  }
-  const total = room.players.length - 1; // Trừ người bị hỏi
-  const voted = room.votes.length;
-  const acceptCount = room.votes.filter(v => v.vote === "accept").length;
 
-  io.to(roomCode).emit("tod-voted", {
-    player, vote,
-    acceptCount, voted, total
-  });
-
-  // Nếu tất cả đã vote
-  if (voted === total) {
-    if (acceptCount >= Math.ceil(total / 2)) {
-      io.to(roomCode).emit("tod-result", { result: "accepted" });
-      room.currentIndex = (room.currentIndex + 1) % room.players.length;
-      room.votes = []; // <-- Reset votes ở đây!
-      const nextPlayer = room.players[room.currentIndex].name;
-      setTimeout(() => {
-        io.to(roomCode).emit("tod-your-turn", { player: nextPlayer });
-      }, 2000);
-    } else {
-      io.to(roomCode).emit("tod-result", { result: "rejected" });
-      setTimeout(async () => {
-        room.votes = [];
-        const lastChoice = room.lastChoice;
-        const question = await getRandomQuestion(lastChoice);
-        room.lastQuestion = question;
-        io.to(roomCode).emit("tod-question", {
-          player: room.players[room.currentIndex].name,
-          choice: lastChoice,
-          question
-        });
-      }, 2000);
-    }
-  }
-});
