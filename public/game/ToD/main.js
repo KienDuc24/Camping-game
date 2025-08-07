@@ -238,17 +238,7 @@ questionMini.onclick = () => {
 socket.on("tod-voted", ({ acceptCount, voted, total }) => {
   document.getElementById("status").textContent =
     `Đã vote: ${voted}/${total} | Chấp thuận: ${acceptCount}`;
-  if (acceptCount >= Math.ceil(total / 2)) {
-    io.to(roomCode).emit("tod-result", { result: "accepted" });
-    room.currentIndex = (room.currentIndex + 1) % room.players.length;
-    room.votes = []; // <-- THÊM DÒNG NÀY
-    const nextPlayer = room.players[room.currentIndex].name;
-    setTimeout(() => {
-      io.to(roomCode).emit("tod-your-turn", { player: nextPlayer });
-    }, 2000);
-  }
   console.log(`[VOTED] ${voted}/${total} | accept: ${acceptCount}`);
 });
-
 
 
