@@ -22,6 +22,20 @@
     .start-btn { background: #28a745; color: white; }
     .choice-btn { background: #007bff; color: white; }
     .vote-btn { background: #ffc107; color: black; }
+
+    /* Spinner CSS */
+    .spinner {
+      margin: 24px auto;
+      width: 60px;
+      height: 60px;
+      border: 8px solid #eee;
+      border-top: 8px solid #007bff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      100% { transform: rotate(360deg); }
+    }
   </style>
 </head>
 <body>
@@ -109,6 +123,9 @@
           });
           controls.appendChild(btn);
         });
+      } else {
+        // Hiện spinner khi chờ người khác chọn
+        controls.innerHTML = `<div class="spinner"></div>`;
       }
     });
 
@@ -116,18 +133,24 @@
       document.getElementById("status").textContent =
         `${player} chọn ${choice.toUpperCase()}: ${question}`;
       const controls = document.getElementById("controls");
-      controls.innerHTML = `
-        <button id="acceptBtn" class="btn-green">Chấp nhận</button>
-        <button id="rejectBtn" class="btn-red">Không đồng ý</button>
-      `;
-      document.getElementById("acceptBtn").onclick = () => {
-        socket.emit("tod-vote", { roomCode, player: playerName, vote: "accept" });
-        controls.innerHTML = "Đã vote!";
-      };
-      document.getElementById("rejectBtn").onclick = () => {
-        socket.emit("tod-vote", { roomCode, player: playerName, vote: "reject" });
-        controls.innerHTML = "Đã vote!";
-      };
+
+      // Nếu bạn là người bị hỏi thì không hiện nút vote
+      if (playerName === player) {
+        controls.innerHTML = "";
+      } else {
+        controls.innerHTML = `
+          <button id="acceptBtn" class="btn-green">Chấp nhận</button>
+          <button id="rejectBtn" class="btn-red">Không đồng ý</button>
+        `;
+        document.getElementById("acceptBtn").onclick = () => {
+          socket.emit("tod-vote", { roomCode, player: playerName, vote: "accept" });
+          controls.innerHTML = "Đã vote!";
+        };
+        document.getElementById("rejectBtn").onclick = () => {
+          socket.emit("tod-vote", { roomCode, player: playerName, vote: "reject" });
+          controls.innerHTML = "Đã vote!";
+        };
+      }
     });
 
     socket.on("tod-voted", ({ player, vote, acceptCount, voted, total }) => {
