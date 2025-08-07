@@ -17,11 +17,12 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      /* Thêm hình nền cắm trại nhẹ */
-      background-image: url('https://cdn.pixabay.com/photo/2017/01/20/00/30/camping-1990100_1280.png');
+      background-image:
+        url('https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?auto=format&fit=crop&w=800&q=80'),
+        linear-gradient(135deg, #f8ffae 0%, #43c6ac 100%);
       background-size: cover;
       background-repeat: no-repeat;
-      background-position: bottom center;
+      background-position: center center;
     }
     h1 {
       margin: 16px 0 6px 0;
@@ -178,15 +179,13 @@
     }
     #table {
       position: absolute;
-      width: 95vw;
-      max-width: 520px;
-      height: 260px;
+      width: 420px;
+      height: 220px;
       left: 50%; top: 50%;
       transform: translate(-50%, -50%);
-      background: radial-gradient(ellipse at 60% 40%, #fff 60%, #43c6ac33 100%);
+      background: url('https://pngimg.com/uploads/table/table_PNG17301.png') no-repeat center/contain;
       border-radius: 50% / 40%;
-      border: 8px solid #43c6ac;
-      box-shadow: 0 8px 32px #43c6ac33, 0 0 0 12px #fff8;
+      box-shadow: 0 8px 32px #0003, 0 0 0 12px #fff8;
       z-index: 1;
       display: flex;
       align-items: center;
@@ -247,7 +246,7 @@
       button { font-size: 1rem; padding: 10px 12px; }
       #controls { gap: 6px; }
       #table-area { height: 180px; }
-      #table { height: 110px; }
+      #table { width: 180px; height: 90px; }
       .player-avatar { width: 32px; height: 32px; font-size: 1.1rem; }
       .card { width: 90vw; min-width: 180px; height: 140px; font-size: 1rem; }
     }
@@ -327,10 +326,10 @@
       table.querySelectorAll(".player-avatar").forEach(e => e.remove());
       const n = players.length;
       const isMobile = window.innerWidth <= 600;
-      const a = isMobile ? 45 : 210; // trục bán kính ngang
-      const b = isMobile ? 30 : 90;  // trục bán kính dọc
-      const centerX = isMobile ? 90 : 260;
-      const centerY = isMobile ? 55 : 130;
+      const a = isMobile ? 70 : 180; // trục bán kính ngang
+      const b = isMobile ? 35 : 80;  // trục bán kính dọc (tăng lên cho bàn tròn)
+      const centerX = isMobile ? 90 : 210;
+      const centerY = isMobile ? 45 : 110;
       players.forEach((p, i) => {
         const angle = (2 * Math.PI * i) / n - Math.PI / 2;
         const x = centerX + a * Math.cos(angle) - (isMobile ? 16 : 32);
