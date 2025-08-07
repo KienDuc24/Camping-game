@@ -444,28 +444,33 @@
     function renderQuestionBar() {
       const bar = document.getElementById("question-bar");
       bar.innerHTML = "";
+      // Ẩn vote khi không có câu hỏi
+      document.querySelector(".card-actions").style.display = "none";
       if (!lastQuestion) return;
       const div = document.createElement("div");
       div.className = "question-floating " + lastType + (questionShrink ? " shrink" : "");
       div.title = questionShrink ? "Xem lại thử thách" : "Thu nhỏ";
       div.onclick = (e) => {
-        // Nếu bấm vào nút thu nhỏ thì không toggle
         if (e.target.classList.contains("shrink-btn")) return;
         questionShrink = !questionShrink;
         renderQuestionBar();
+        // Hiện vote khi phóng to, ẩn vote khi thu nhỏ
+        document.querySelector(".card-actions").style.display = questionShrink ? "none" : "";
       };
       // Icon thiên sứ/cầu nguyện hoặc ác quỷ
       let icon = lastType === "truth"
         ? `<span class="q-icon">😇</span>`
         : `<span class="q-icon">😈</span>`;
       // Nút thu nhỏ/phóng to
-      let shrinkBtn = `<button class="shrink-btn" tabindex="-1" onclick="event.stopPropagation();questionShrink=!questionShrink;renderQuestionBar();">${questionShrink ? "🔍" : "➖"}</button>`;
+      let shrinkBtn = `<button class="shrink-btn" tabindex="-1" onclick="event.stopPropagation();questionShrink=!questionShrink;renderQuestionBar();document.querySelector('.card-actions').style.display=questionShrink?'none':'';">${questionShrink ? "🔍" : "➖"}</button>`;
       if (questionShrink) {
         div.innerHTML = icon;
       } else {
         div.innerHTML = icon + lastQuestion + shrinkBtn;
       }
       bar.appendChild(div);
+      // Hiện vote khi phóng to, ẩn vote khi thu nhỏ
+      document.querySelector(".card-actions").style.display = questionShrink ? "none" : "";
     }
 
     socket.on("tod-your-turn", ({ player }) => {
@@ -482,8 +487,8 @@
       lastType = "";
       questionShrink = false;
       renderQuestionBar();
-
-      currentAsked = null; // Chưa có ai bị hỏi
+      // Ẩn vote khi sang lượt mới
+      document.querySelector(".card-actions").style.display = "none";
 
       // Không hiện spinner nữa
       // Hiện nút chọn khi là bạn
@@ -569,7 +574,6 @@
       showCard(lastQuestion);
       questionShrink = false;
       renderQuestionBar();
-
       // Hiện nút vote khi có câu hỏi, ẩn nếu là người bị hỏi
       if (playerName === player) {
         document.getElementById("acceptBtn").style.display = "none";
