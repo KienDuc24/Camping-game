@@ -95,9 +95,9 @@ module.exports = (socket, io, rooms) => {
     if (!room.votes.some(v => v.player === player)) {
       room.votes.push({ player, vote });
     }
-    const acceptCount = room.votes.filter(v => v.vote === "accept").length;
-    const total = room.players.length;
+    const total = room.players.length - 1; // Trừ người bị hỏi
     const voted = room.votes.length;
+    const acceptCount = room.votes.filter(v => v.vote === "accept").length;
 
     io.to(roomCode).emit("tod-voted", {
       player, vote,
