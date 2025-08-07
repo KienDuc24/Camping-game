@@ -50,8 +50,14 @@ module.exports = (socket, io, rooms) => {
     if (!rooms[roomCode]) {
       rooms[roomCode] = {
         players: [],
-        currentIndex: 0
+        currentIndex: 0,
+        locked: false
       };
+    }
+    // Nếu phòng đã khóa thì không cho join
+    if (rooms[roomCode].locked) {
+      socket.emit("tod-join-failed", { reason: "Phòng đã bắt đầu, không thể vào thêm!" });
+      return;
     }
     // Thêm player nếu chưa có
     if (!rooms[roomCode].players.some(p => p.name === player)) {
@@ -65,9 +71,11 @@ module.exports = (socket, io, rooms) => {
     });
   });
 
+  // Khi chủ phòng bắt đầu, khóa phòng
   socket.on("tod-start-round", ({ roomCode }) => {
     const room = rooms[roomCode];
     if (!room || room.players.length < 2) return;
+    room.locked = true; // Khóa phòng
     if (room.currentIndex === undefined) room.currentIndex = 0;
     const currentPlayer = room.players[room.currentIndex % room.players.length].name;
     io.to(roomCode).emit("tod-your-turn", { player: currentPlayer });
@@ -108,22 +116,24 @@ module.exports = (socket, io, rooms) => {
     if (voted === total) {
       if (acceptCount >= Math.ceil(total / 2)) {
         io.to(roomCode).emit("tod-result", { result: "accepted" });
-        // Đến lượt tiếp theo
         room.currentIndex = (room.currentIndex + 1) % room.players.length;
-        room.votes = []; // <--- Reset votes ở đây
+        room.votes = [];
         const nextPlayer = room.players[room.currentIndex].name;
         setTimeout(() => {
           io.to(roomCode).emit("tod-your-turn", { player: nextPlayer });
         }, 2000);
       } else {
         io.to(roomCode).emit("tod-result", { result: "rejected" });
-        // Người chơi phải trả lời lại (gửi lại câu hỏi)
-        setTimeout(() => {
-          room.votes = []; // <--- Reset votes ở đây
+        // Random lại câu hỏi mới
+        setTimeout(async () => {
+          room.votes = [];
+          const lastChoice = room.lastChoice;
+          const question = await getRandomQuestion(lastChoice);
+          room.lastQuestion = question;
           io.to(roomCode).emit("tod-question", {
             player: room.players[room.currentIndex].name,
-            choice: room.lastChoice,
-            question: room.lastQuestion
+            choice: lastChoice,
+            question
           });
         }, 2000);
       }
