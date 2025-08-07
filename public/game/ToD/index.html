@@ -148,16 +148,6 @@
       filter: brightness(1.08);
       box-shadow: 0 4px 16px #0002;
     }
-    .spinner {
-      margin: 24px auto;
-      width: 48px;
-      height: 48px;
-      border: 6px solid #eee;
-      border-top: 6px solid #43c6ac;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
-    @keyframes spin { 100% { transform: rotate(360deg); } }
 
     /* Campfire Table Styles */
     #table-area {
@@ -235,33 +225,36 @@
     /* Floating question bar & icon */
     #question-bar {
       position: fixed;
-      top: 0;
-      left: 0;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
       width: 100vw;
       z-index: 1001;
       display: flex;
       justify-content: center;
       align-items: center;
       pointer-events: none;
+      transition: top 0.2s;
     }
     .question-floating {
-      margin: 8px auto 0 auto;
-      padding: 12px 22px;
-      border-radius: 16px;
-      font-size: 1.15rem;
+      margin: 0 auto;
+      padding: 18px 28px;
+      border-radius: 18px;
+      font-size: 1.25rem;
       font-weight: 700;
       box-shadow: 0 4px 24px #0003;
       text-align: center;
       display: inline-flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
       pointer-events: auto;
-      max-width: 92vw;
+      max-width: 96vw;
       min-width: 120px;
       border: 2px solid #43c6ac;
       cursor: pointer;
       transition: box-shadow 0.2s, background 0.2s;
       user-select: none;
+      word-break: break-word;
     }
     .question-floating.truth {
       background: linear-gradient(90deg, #a8edea 0%, #fed6e3 100%);
@@ -282,7 +275,7 @@
       overflow: hidden;
       white-space: nowrap;
       box-shadow: 0 2px 8px #0002;
-      margin: 10px 10px 0 auto;
+      margin: 0 10px 0 auto;
     }
     .question-floating .q-icon {
       font-size: 1.5em;
@@ -301,6 +294,27 @@
     }
     .question-floating .shrink-btn:hover { color: #222; }
 
+    /* Card actions styles */
+    .card-actions {
+      display: flex;
+      gap: 18px;
+      margin-top: 18px;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    @media (max-width: 600px) {
+      .card-actions {
+        gap: 8px;
+        margin-top: 10px;
+      }
+      .card-actions button {
+        font-size: 0.98rem;
+        padding: 8px 10px;
+        min-width: 90px;
+      }
+    }
+
     @media (max-width: 600px) {
       h1 { font-size: 1.1rem; }
       #status { font-size: 0.98rem; padding: 6px 8px; }
@@ -310,8 +324,9 @@
       #table-area { width: 98vw; height: 180px; }
       #campfire { width: 48px; height: 48px; }
       .player-avatar { width: 32px; height: 32px; font-size: 1.1rem; }
-      .question-floating { font-size: 0.98rem; padding: 8px 8px; }
+      .question-floating { font-size: 1.02rem; padding: 10px 8px; }
       .question-floating.shrink { font-size: 1.1rem; min-width: 38px; max-width: 38px; height: 38px; }
+      #question-bar { top: 60px; }
     }
   </style>
 </head>
@@ -339,12 +354,12 @@
 
   <div id="table-area">
     <div id="campfire">
-      <img class="campfire-img" src="https://cdn.pixabay.com/photo/2017/01/31/13/14/fire-2028710_1280.png" alt="Campfire">
+      <img class="campfire-img" src="./Img/campfire.png" alt="Campfire">
     </div>
     <div id="table"></div>
   </div>
 
-  <!-- Thanh/câu hỏi nổi bật trên cùng, có thể thu nhỏ/phóng to -->
+  <!-- Thanh/câu hỏi nổi bật giữa màn hình, có thể thu nhỏ/phóng to -->
   <div id="question-bar"></div>
 
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
@@ -425,7 +440,7 @@
       });
     }
 
-    // Thanh/câu hỏi nổi trên cùng, có thể thu nhỏ/phóng to
+    // Thanh/câu hỏi nổi giữa màn hình, có thể thu nhỏ/phóng to
     function renderQuestionBar() {
       const bar = document.getElementById("question-bar");
       bar.innerHTML = "";
@@ -453,9 +468,6 @@
       bar.appendChild(div);
     }
 
-    // Mini popup icon (nếu muốn, có thể thêm vào)
-    // <div class="question-mini" onclick="showMiniPopup()" title="Xem lại thử thách">?</div>
-
     socket.on("tod-your-turn", ({ player }) => {
       const isYou = player === playerName;
       document.getElementById("status-text").textContent =
@@ -465,14 +477,17 @@
       document.getElementById("vote-info").style.display = "none";
       document.getElementById("controls").innerHTML = "";
 
-      currentAsked = null; // Chưa có ai bị hỏi
+      // Ẩn câu hỏi cũ khi sang lượt mới
+      lastQuestion = "";
+      lastType = "";
+      questionShrink = false;
       renderQuestionBar();
 
-      // Hiện spinner khi chờ người khác chọn
-      if (!isYou) {
-        document.getElementById("controls").innerHTML = `<div class="spinner"></div>`;
-      } else {
-        // Nút Sự thật/Thử thách đẹp, có icon
+      currentAsked = null; // Chưa có ai bị hỏi
+
+      // Không hiện spinner nữa
+      // Hiện nút chọn khi là bạn
+      if (isYou) {
         const btnTruth = document.createElement("button");
         btnTruth.innerHTML = `<span style="font-size:1.4em;">😇</span> Sự thật`;
         btnTruth.className = "choice-btn truth";
@@ -504,6 +519,8 @@
     function showCard(content) {
       cardContent.textContent = content;
       card.classList.remove("hidden", "swipe-left", "swipe-right");
+      // Hiện nút vote khi có câu hỏi
+      document.querySelector(".card-actions").style.display = "";
     }
 
     function hideCard(direction) {
@@ -553,13 +570,15 @@
       questionShrink = false;
       renderQuestionBar();
 
-      // Ẩn nút vote nếu là người bị hỏi
+      // Hiện nút vote khi có câu hỏi, ẩn nếu là người bị hỏi
       if (playerName === player) {
         document.getElementById("acceptBtn").style.display = "none";
         document.getElementById("rejectBtn").style.display = "none";
+        document.querySelector(".card-actions").style.display = "none";
       } else {
         document.getElementById("acceptBtn").style.display = "";
         document.getElementById("rejectBtn").style.display = "";
+        document.querySelector(".card-actions").style.display = "";
       }
     });
 
