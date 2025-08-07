@@ -24,7 +24,12 @@ async function getRandomQuestion(type) {
   const rows = await sheet.getRows();
   // Dùng đúng tên header, viết hoa y như trên sheet
   const col = type === "truth" ? "TRUTH" : "DARE";
-  const questions = rows.map(row => row[col]).filter(q => !!q && q.trim() !== "");
+  const questions = rows
+    .map(row => row[col])
+    .filter(q => typeof q === "string" && q.trim().length > 0);
+
+  console.log(`[ToD] Đã lấy được ${questions.length} câu hỏi (${col}):`, questions);
+
   if (!questions.length) throw new Error("Không có câu hỏi nào!");
   const random = questions[Math.floor(Math.random() * questions.length)];
   return random;
@@ -76,11 +81,6 @@ module.exports = (socket, io, rooms) => {
     // io.to(roomCode).emit("tod-result", { message: "✅ Chấp nhận!" });
   });
 
-  socket.on("tod-joined", ({ players, host }) => {
-    document.getElementById("playerList").innerHTML = players
-      .map(p => `<li>${p.order}. ${p.name}</li>`)
-      .join("");
-  });
 
   socket.on("tod-next", ({ roomCode }) => {
     const room = rooms[roomCode];

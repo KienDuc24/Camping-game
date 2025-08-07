@@ -43,7 +43,6 @@
     const roomCode = urlParams.get("code");
     const hostFromURL = urlParams.get("host");
     let playerName = sessionStorage.getItem("playerName");
-
     if (!playerName) {
       playerName = prompt("Vui lòng nhập tên của bạn:");
       if (playerName) {
