@@ -75,7 +75,9 @@
       console.log("5. List of players in room (from server):", players);
       console.log("-----------------------------");
 
-      document.getElementById("playerList").innerHTML = players.map(p => `<li>${p}</li>`).join("");
+      document.getElementById("playerList").innerHTML = players
+        .map(p => `<li>${p.order ? p.order + '. ' : ''}${p.name}</li>`)
+        .join("");
       document.getElementById("status").textContent = `Người chơi: ${players.length}`;
 
       if (playerName === currentHost) {

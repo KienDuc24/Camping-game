@@ -30,30 +30,28 @@ async function getRandomQuestion(type) {
 module.exports = (socket, io, rooms) => {
   socket.on("tod-join", ({ roomCode, player }) => {
     if (!rooms[roomCode]) {
-      // Nếu phòng chưa tồn tại, tạo mới và set host là người đầu tiên
-      rooms[roomCode] = [{ name: player }];
-      console.log(`🆕 Tạo phòng mới ${roomCode} với host ${player}`);
-    } else if (!rooms[roomCode].some(p => p.name === player)) {
-      // Nếu chưa có, thêm vào cuối và gán số thứ tự
-      rooms[roomCode].push({ name: player, order: rooms[roomCode].length + 1 });
+      rooms[roomCode] = {
+        players: [],
+        currentIndex: 0
+      };
+    }
+    // Thêm player nếu chưa có
+    if (!rooms[roomCode].players.some(p => p.name === player)) {
+      rooms[roomCode].players.push({ name: player, order: rooms[roomCode].players.length + 1 });
     }
     socket.join(roomCode);
 
     io.to(roomCode).emit("tod-joined", {
-      host: rooms[roomCode][0]?.name || null,
-      players: rooms[roomCode].map(p => ({ name: p.name, order: p.order }))
+      host: rooms[roomCode].players[0]?.name || null,
+      players: rooms[roomCode].players
     });
   });
 
-  // Thêm vào rooms[roomCode] một biến currentIndex
-  if (!rooms[roomCode].currentIndex) rooms[roomCode].currentIndex = 0;
-
-  // Khi host bắt đầu:
   socket.on("tod-start-round", ({ roomCode }) => {
     const room = rooms[roomCode];
-    if (!room || room.length < 2) return;
+    if (!room || room.players.length < 2) return;
     if (room.currentIndex === undefined) room.currentIndex = 0;
-    const currentPlayer = room[room.currentIndex % room.length].name;
+    const currentPlayer = room.players[room.currentIndex % room.players.length].name;
     io.to(roomCode).emit("tod-your-turn", { player: currentPlayer });
   });
 
