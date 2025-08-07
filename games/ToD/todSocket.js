@@ -22,7 +22,10 @@ async function getRandomQuestion(type) {
   await doc.loadInfo();
   const sheet = doc.sheetsByIndex[0];
   const rows = await sheet.getRows();
-  const questions = rows.map(row => row[type === "truth" ? "TRUTH" : "DARE"]).filter(Boolean);
+  // Dùng đúng tên header, viết hoa y như trên sheet
+  const col = type === "truth" ? "TRUTH" : "DARE";
+  const questions = rows.map(row => row[col]).filter(q => !!q && q.trim() !== "");
+  if (!questions.length) throw new Error("Không có câu hỏi nào!");
   const random = questions[Math.floor(Math.random() * questions.length)];
   return random;
 }
