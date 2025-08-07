@@ -32,23 +32,23 @@ io.on("connection", (socket) => {
 
   socket.on("join-room", ({ roomCode, player }) => {
     socket.join(roomCode);
-    if (!rooms[roomCode]) rooms[roomCode] = [];
-    rooms[roomCode].push({ name: player, socketId: socket.id });
+    if (!rooms[roomCode]) rooms[roomCode] = { players: [] };
+    rooms[roomCode].players.push({ name: player, socketId: socket.id });
     io.to(roomCode).emit("update-players", {
-      list: rooms[roomCode].map(p => p.name),
-      host: rooms[roomCode][0]?.name || null
+      list: rooms[roomCode].players.map(p => p.name),
+      host: rooms[roomCode].players[0]?.name || null
     });
   });
 
   socket.on("leave-room", ({ roomCode, player }) => {
     if (rooms[roomCode]) {
-      rooms[roomCode] = rooms[roomCode].filter(p => p.name !== player);
-      if (rooms[roomCode].length === 0) {
+      rooms[roomCode].players = rooms[roomCode].players.filter(p => p.name !== player);
+      if (rooms[roomCode].players.length === 0) {
         delete rooms[roomCode];
       } else {
         io.to(roomCode).emit("update-players", {
-          list: rooms[roomCode].map(p => p.name),
-          host: rooms[roomCode][0]?.name || null
+          list: rooms[roomCode].players.map(p => p.name),
+          host: rooms[roomCode].players[0]?.name || null
         });
       }
     }
@@ -57,7 +57,7 @@ io.on("connection", (socket) => {
 
   socket.on("start-game", ({ roomCode }) => {
     console.log("🚀 Nhận yêu cầu start game:", roomCode);
-    const host = rooms[roomCode]?.[0]?.name;
+    const host = rooms[roomCode]?.players?.[0]?.name;
     io.to(roomCode).emit("game-started", { host });
   });
 
@@ -65,13 +65,13 @@ io.on("connection", (socket) => {
     for (const roomCode in rooms) {
       const index = rooms[roomCode].players.findIndex(p => p.socketId === socket.id);
       if (index !== -1) {
-        rooms[roomCode].splice(index, 1);
-        if (rooms[roomCode].length === 0) {
+        rooms[roomCode].players.splice(index, 1);
+        if (rooms[roomCode].players.length === 0) {
           delete rooms[roomCode];
         } else {
           io.to(roomCode).emit("update-players", {
-            list: rooms[roomCode].map(p => p.name),
-            host: rooms[roomCode][0]?.name || null
+            list: rooms[roomCode].players.map(p => p.name),
+            host: rooms[roomCode].players[0]?.name || null
           });
         }
         break;

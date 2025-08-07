@@ -1,6 +1,7 @@
 require('dotenv').config({ path: require('path').resolve(__dirname, '../../.env') });
 
 const { GoogleSpreadsheet } = require('google-spreadsheet');
+const doc = new GoogleSpreadsheet('1V9DHRD02AZTVp-jzHcJRFsY0-sxsPg_o3IW-uSYCx3o');
 
 const creds = {
   type: "service_account",
@@ -17,7 +18,6 @@ const creds = {
 };
 
 async function getRandomQuestion(type) {
-  const doc = new GoogleSpreadsheet('1V9DHRD02AZTVp-jzHcJRFsY0-sxsPg_o3IW-uSYCx3o');
   await doc.useServiceAccountAuth({
     client_email: creds.client_email,
     private_key: creds.private_key,
