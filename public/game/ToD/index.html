@@ -271,6 +271,44 @@
       0%, 100% { transform: translateX(-50%) translateY(0);}
       50% { transform: translateX(-50%) translateY(-10px);}
     }
+
+    /* Popup Styles */
+    .question-popup {
+      position: fixed;
+      top: 16px; left: 50%; transform: translateX(-50%);
+      min-width: 180px;
+      max-width: 90vw;
+      z-index: 100;
+      padding: 18px 28px;
+      border-radius: 18px;
+      font-size: 1.15rem;
+      font-weight: 600;
+      box-shadow: 0 4px 24px #0004;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    .question-popup.shrink {
+      padding: 8px 12px;
+      font-size: 1.1rem;
+      min-width: 48px;
+      max-width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      overflow: hidden;
+      white-space: nowrap;
+      justify-content: center;
+    }
+    .question-popup.truth { background: linear-gradient(90deg, #a8edea 0%, #fed6e3 100%); color: #222; }
+    .question-popup.dare { background: linear-gradient(90deg, #f857a6 0%, #ff5858 100%); color: #fff; }
+    .question-popup .icon { font-size: 1.5em; }
+    @media (max-width: 600px) {
+      .question-popup { font-size: 1rem; padding: 10px 10px; }
+    }
   </style>
 </head>
 <body>
@@ -286,8 +324,8 @@
     <div id="challenge-card" class="card hidden">
       <div class="card-content"></div>
       <div class="card-actions">
-        <button id="rejectBtn" class="btn-red">Bỏ qua</button>
-        <button id="acceptBtn" class="btn-green">Chấp nhận</button>
+        <button id="rejectBtn" class="btn-red">Không thông qua</button>
+        <button id="acceptBtn" class="btn-green">Thông qua</button>
       </div>
     </div>
   </div>
@@ -295,6 +333,8 @@
   <div id="table-area">
     <div id="table"></div>
   </div>
+
+  <div id="question-popup" class="question-popup hidden"></div>
 
   <script>
     const socket = io("https://camping-game-production.up.railway.app", {
@@ -347,8 +387,8 @@
       table.querySelectorAll(".player-avatar").forEach(e => e.remove());
       const n = players.length;
       const isMobile = window.innerWidth <= 600;
-      const a = isMobile ? 70 : 180; // trục bán kính ngang
-      const b = isMobile ? 35 : 80;  // trục bán kính dọc
+      const a = isMobile ? 90 : 220; // bán kính ngang lớn hơn bàn
+      const b = isMobile ? 45 : 110; // bán kính dọc lớn hơn bàn
       const centerX = isMobile ? 90 : 210;
       const centerY = isMobile ? 45 : 110;
       players.forEach((p, i) => {
@@ -475,7 +515,7 @@
         Array.from(document.querySelectorAll("#playerList li")).map(li => ({ name: li.textContent.replace(/^(\W+\s)?/, "") })),
         currentAsked
       );
-      showCard(`${player} chọn ${choice.toUpperCase()}: ${question}`);
+      showQuestionPopup(player, choice, question);
 
       // Ẩn nút vote nếu là người bị hỏi
       if (playerName === player) {
@@ -493,7 +533,8 @@
     });
 
     socket.on("tod-result", ({ result }) => {
-      card.classList.add("hidden"); // Ẩn lá bài cho tất cả
+      hideQuestionPopup();
+      card.classList.add("hidden");
       if (result === "accepted") {
         document.getElementById("status").textContent = "✅ Đa số chấp nhận! Đến lượt tiếp theo...";
       } else {
@@ -509,6 +550,26 @@
       alert(reason || "Không thể vào phòng này!");
       window.location.href = "/";
     });
+
+    const questionPopup = document.getElementById("question-popup");
+    let isShrink = false;
+
+    function showQuestionPopup(player, choice, question) {
+      questionPopup.innerHTML = (choice === "truth"
+        ? '<span class="icon">👼</span>'
+        : '<span class="icon">😈</span>')
+        + `<span>${player} chọn ${choice === "truth" ? "Sự thật" : "Thử thách"}:</span> <span>${question}</span>`;
+      questionPopup.className = "question-popup " + choice;
+      questionPopup.classList.remove("hidden");
+      isShrink = false;
+    }
+    questionPopup.onclick = () => {
+      isShrink = !isShrink;
+      questionPopup.classList.toggle("shrink", isShrink);
+    };
+    function hideQuestionPopup() {
+      questionPopup.classList.add("hidden");
+    }
   </script>
 </body>
 </html>
