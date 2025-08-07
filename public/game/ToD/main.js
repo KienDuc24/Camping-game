@@ -151,12 +151,10 @@ card.addEventListener("touchend", e => {
 
 // Button logic
 acceptBtn.onclick = () => {
-  if (playerName === currentAsked) return;
   hideCard("swipe-right");
   socket.emit("tod-vote", { roomCode, player: playerName, vote: "accept" });
 };
 rejectBtn.onclick = () => {
-  if (playerName === currentAsked) return;
   hideCard("swipe-left");
   socket.emit("tod-vote", { roomCode, player: playerName, vote: "reject" });
 };
@@ -174,12 +172,9 @@ socket.on("tod-question", ({ player, choice, question }) => {
   );
   showQuestionPopup(player, choice, question);
 
-  // Hiện popup vote nếu không phải người bị hỏi
-  if (playerName === player) {
-    votePopup.classList.add("hidden");
-  } else {
-    votePopup.classList.remove("hidden");
-  }
+  // Luôn hiện popup vote cho tất cả mọi người
+  votePopup.classList.remove("hidden");
+
   // Reset trạng thái chọn
   hasChosen = false;
 });
@@ -241,3 +236,7 @@ questionMini.onclick = () => {
 };
 
 const total = Math.max(1, room.players.length - 1); // Đảm bảo luôn có ít nhất 1 người vote
+socket.on("tod-voted", ({ acceptCount, voted, total }) => {
+  document.getElementById("status").textContent =
+    `Đã vote: ${voted}/${total} | Chấp thuận: ${acceptCount}`;
+});
