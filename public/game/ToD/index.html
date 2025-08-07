@@ -6,8 +6,229 @@
   <title>Truth or Dare</title>
   <link rel="icon" type="image/x-icon" href="./Img/logo.png">
   <link href="https://fonts.googleapis.com/css?family=Quicksand:700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
-  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+  <style>
+    body {
+      font-family: 'Quicksand', Arial, sans-serif;
+      background: linear-gradient(135deg, #f8ffae 0%, #43c6ac 100%);
+      min-height: 100vh;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    h1 {
+      margin: 24px 0 10px 0;
+      font-size: 2.2rem;
+      color: #333;
+      letter-spacing: 1px;
+      text-shadow: 1px 1px 0 #fff, 2px 2px 8px #43c6ac44;
+    }
+    #status {
+      margin: 18px 0 10px 0;
+      font-size: 1.15rem;
+      color: #222;
+      min-height: 32px;
+      font-weight: 600;
+      background: #fff8;
+      border-radius: 8px;
+      padding: 8px 16px;
+      box-shadow: 0 2px 8px #0001;
+      transition: background 0.3s;
+    }
+    ul#playerList {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 18px 0;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+    }
+    ul#playerList li {
+      background: #fff;
+      border-radius: 6px;
+      padding: 6px 14px;
+      margin: 0 2px;
+      font-weight: 500;
+      color: #333;
+      box-shadow: 0 1px 4px #0001;
+      font-size: 1rem;
+      transition: background 0.2s;
+    }
+    #controls {
+      margin: 18px 0 0 0;
+      min-height: 48px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+    }
+    button {
+      padding: 12px 22px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin: 6px 4px;
+      font-size: 1.1rem;
+      font-family: inherit;
+      font-weight: 700;
+      box-shadow: 0 2px 8px #0002;
+      transition: background 0.2s, transform 0.1s;
+    }
+    button:active {
+      transform: scale(0.97);
+    }
+    .btn-green, .start-btn {
+      background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%);
+      color: #222;
+    }
+    .btn-red {
+      background: linear-gradient(90deg, #ff5858 0%, #f09819 100%);
+      color: #fff;
+    }
+    .choice-btn {
+      background: linear-gradient(90deg, #43c6ac 0%, #191654 100%);
+      color: #fff;
+    }
+    .choice-btn:hover, .btn-green:hover, .btn-red:hover, .start-btn:hover {
+      filter: brightness(1.08);
+      box-shadow: 0 4px 16px #0002;
+    }
+    .spinner {
+      margin: 24px auto;
+      width: 48px;
+      height: 48px;
+      border: 6px solid #eee;
+      border-top: 6px solid #43c6ac;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+
+    /* Challenge Card Styles */
+    #challenge-area {
+      position: relative;
+      width: 320px;
+      height: 220px;
+      margin: 0 auto 20px auto;
+      perspective: 1000px;
+    }
+    .card {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background: #fff;
+      border-radius: 18px;
+      box-shadow: 0 8px 32px #0003;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      transition: transform 0.4s cubic-bezier(.68,-0.55,.27,1.55), opacity 0.3s;
+      z-index: 2;
+      padding: 24px 18px 18px 18px;
+      font-size: 1.15rem;
+    }
+    .card.hidden {
+      display: none;
+    }
+    .card.swipe-left {
+      transform: translateX(-400px) rotate(-20deg);
+      opacity: 0;
+    }
+    .card.swipe-right {
+      transform: translateX(400px) rotate(20deg);
+      opacity: 0;
+    }
+    .card-content {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-size: 1.2rem;
+      color: #222;
+    }
+    .card-actions {
+      display: flex;
+      gap: 18px;
+      margin-top: 18px;
+    }
+
+    /* Table Styles */
+    #table-area {
+      position: relative;
+      width: 340px;
+      height: 340px;
+      margin: 0 auto 18px auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #table {
+      position: absolute;
+      width: 220px;
+      height: 220px;
+      left: 50%; top: 50%;
+      transform: translate(-50%, -50%);
+      background: radial-gradient(circle at 60% 40%, #fff 60%, #43c6ac22 100%);
+      border-radius: 50%;
+      border: 6px solid #43c6ac;
+      box-shadow: 0 8px 32px #43c6ac33;
+      z-index: 1;
+    }
+    #table th, #table td {
+      padding: 12px 16px;
+      text-align: center;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      background: #fff;
+      color: #333;
+      font-size: 1rem;
+    }
+    #table th {
+      background: #f4f4f9;
+      font-weight: 600;
+    }
+    .player-avatar {
+      position: absolute;
+      width: 54px; height: 54px;
+      border-radius: 50%;
+      background: #fff;
+      border: 2px solid #43c6ac;
+      box-shadow: 0 2px 8px #0002;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      transition: border 0.2s;
+    }
+    .player-avatar.host {
+      border: 3px solid #ffb347;
+      background: #fffbe6;
+    }
+    .player-avatar.you {
+      border: 3px solid #43e97b;
+      background: #eafff3;
+    }
+    .player-avatar span {
+      font-size: 0.9rem;
+      margin-left: 4px;
+    }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      h1 { font-size: 1.4rem; }
+      #status { font-size: 1rem; padding: 6px 8px; }
+      ul#playerList li { font-size: 0.95rem; padding: 5px 8px; }
+      button { font-size: 1rem; padding: 10px 12px; }
+      #controls { gap: 6px; }
+      #table-area { width: 180px; height: 180px; }
+      #table { width: 90px; height: 90px; }
+      .player-avatar { width: 32px; height: 32px; font-size: 1.1rem; }
+    }
+  </style>
 </head>
 <body>
   <h1 style="font-size:1.3rem;letter-spacing:2px;">🏕️ Truth or Dare</h1>
@@ -32,16 +253,213 @@
     <div id="table"></div>
   </div>
 
-  <div id="question-popup" class="question-popup hidden">
-    <span id="question-content"></span>
-    <button id="shrink-btn" class="shrink-btn" title="Thu nhỏ">❔</button>
-  </div>
-  <div id="question-mini" class="question-mini hidden" title="Xem câu hỏi">❔</div>
-  <div id="vote-popup" class="vote-popup hidden">
-    <button id="rejectBtn" class="btn-red">Không thông qua</button>
-    <button id="acceptBtn" class="btn-green">Thông qua</button>
-  </div>
+  <script>
+    const socket = io("https://camping-game-production.up.railway.app", {
+      transports: ["websocket"],
+      secure: true
+    });
 
-  <script src="main.js"></script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const roomCode = urlParams.get("code");
+    const hostFromURL = urlParams.get("host");
+    let playerName = sessionStorage.getItem("playerName");
+    if (!playerName) {
+      playerName = prompt("Vui lòng nhập tên của bạn:");
+      if (playerName) {
+        sessionStorage.setItem("playerName", playerName);
+      } else {
+        alert("Bạn phải nhập tên để tham gia trò chơi!");
+        window.location.href = "/";
+        throw new Error("Player name is required.");
+      }
+    }
+
+    document.getElementById("roomCode").textContent = roomCode;
+    let currentHost = null;
+    let currentAsked = null; // Lưu người bị hỏi để highlight
+
+    socket.on("connect", () => {
+      socket.emit("tod-join", { roomCode, player: playerName });
+    });
+
+    socket.on("tod-joined", ({ players, host }) => {
+      currentHost = host;
+      document.getElementById("playerList").innerHTML = players
+        .map((p, i) => `<li>${i === 0 ? "🎲 " : "👤 "}${p.name}</li>`)
+        .join("");
+      document.getElementById("status").textContent = `Người chơi: ${players.length}`;
+      renderTable(players, currentAsked);
+
+      // Chỉ host mới được hiện nút bắt đầu
+      if (playerName === host) {
+        document.getElementById("controls").innerHTML =
+          `<button class="btn-green" onclick="socket.emit('tod-start-round', { roomCode })">Bắt đầu vòng chơi</button>`;
+      } else {
+        document.getElementById("controls").innerHTML = "";
+      }
+    });
+
+    function renderTable(players, askedName) {
+      const table = document.getElementById("table-area");
+      table.querySelectorAll(".player-avatar").forEach(e => e.remove());
+      const n = players.length;
+      // Responsive bán kính
+      const isMobile = window.innerWidth <= 600;
+      const R = isMobile ? 60 : 140;
+      const center = isMobile ? 90 : 170;
+      players.forEach((p, i) => {
+        const angle = (2 * Math.PI * i) / n - Math.PI / 2;
+        const x = center + R * Math.cos(angle) - (isMobile ? 16 : 27);
+        const y = center + R * Math.sin(angle) - (isMobile ? 16 : 27);
+        const div = document.createElement("div");
+        div.className = "player-avatar" +
+          (i === 0 ? " host" : "") +
+          (p.name === playerName ? " you" : "") +
+          (askedName && p.name === askedName ? " asked" : "");
+        div.style.left = x + "px";
+        div.style.top = y + "px";
+        div.innerHTML = `
+          ${askedName && p.name === askedName ? '<div class="arrow-up"></div>' : ''}
+          <img src="https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(p.name)}" width="${isMobile ? 24 : 36}" height="${isMobile ? 24 : 36}" style="border-radius:50%">
+          <span>${p.name}</span>
+        `;
+        table.appendChild(div);
+      });
+    }
+
+    // Thêm CSS cho mũi tên chỉ người bị hỏi
+    const style = document.createElement('style');
+    style.innerHTML = `
+      .player-avatar.asked {
+        box-shadow: 0 0 0 4px #ffb34799, 0 2px 8px #0002;
+        z-index: 10;
+      }
+      .arrow-up {
+        width: 0; height: 0;
+        border-left: 12px solid transparent;
+        border-right: 12px solid transparent;
+        border-bottom: 18px solid #ffb347;
+        margin: 0 auto 2px auto;
+        position: absolute;
+        top: -22px; left: 50%; transform: translateX(-50%);
+        z-index: 11;
+      }
+    `;
+    document.head.appendChild(style);
+
+    socket.on("tod-your-turn", ({ player }) => {
+      const isYou = player === playerName;
+      document.getElementById("status").textContent =
+        isYou
+          ? "👉 Đến lượt bạn! Chọn Truth hoặc Dare"
+          : `⏳ ${player} đang chọn Truth hoặc Dare...`;
+
+      document.getElementById("controls").innerHTML = "";
+
+      currentAsked = null; // Chưa có ai bị hỏi
+      // Hiện spinner khi chờ người khác chọn
+      if (!isYou) {
+        document.getElementById("controls").innerHTML = `<div class="spinner"></div>`;
+      } else {
+        ["Truth", "Dare"].forEach(choice => {
+          const btn = document.createElement("button");
+          btn.textContent = choice;
+          btn.className = "choice-btn";
+          btn.onclick = () => socket.emit("tod-choice", {
+            roomCode,
+            player: playerName,
+            choice: choice.toLowerCase()
+          });
+          document.getElementById("controls").appendChild(btn);
+        });
+      }
+    });
+
+    const card = document.getElementById("challenge-card");
+    const cardContent = card.querySelector(".card-content");
+    const acceptBtn = document.getElementById("acceptBtn");
+    const rejectBtn = document.getElementById("rejectBtn");
+
+    let startX = null;
+
+    function showCard(content) {
+      cardContent.textContent = content;
+      card.classList.remove("hidden", "swipe-left", "swipe-right");
+    }
+
+    function hideCard(direction) {
+      card.classList.add(direction);
+      setTimeout(() => {
+        card.classList.add("hidden");
+        card.classList.remove("swipe-left", "swipe-right");
+      }, 400);
+    }
+
+    // Swipe logic
+    card.addEventListener("touchstart", e => {
+      startX = e.touches[0].clientX;
+    });
+    card.addEventListener("touchend", e => {
+      if (startX === null) return;
+      const endX = e.changedTouches[0].clientX;
+      if (endX - startX > 80) {
+        acceptBtn.click();
+      } else if (startX - endX > 80) {
+        rejectBtn.click();
+      }
+      startX = null;
+    });
+
+    // Button logic
+    acceptBtn.onclick = () => {
+      hideCard("swipe-right");
+      socket.emit("tod-vote", { roomCode, player: playerName, vote: "accept" });
+    };
+    rejectBtn.onclick = () => {
+      hideCard("swipe-left");
+      socket.emit("tod-vote", { roomCode, player: playerName, vote: "reject" });
+    };
+
+    // Khi nhận thử thách mới
+    socket.on("tod-question", ({ player, choice, question }) => {
+      currentAsked = player;
+      renderTable(
+        Array.from(document.querySelectorAll("#playerList li")).map(li => ({ name: li.textContent.replace(/^(\W+\s)?/, "") })),
+        currentAsked
+      );
+      showCard(`${player} chọn ${choice.toUpperCase()}: ${question}`);
+
+      // Ẩn nút vote nếu là người bị hỏi
+      if (playerName === player) {
+        document.getElementById("acceptBtn").style.display = "none";
+        document.getElementById("rejectBtn").style.display = "none";
+      } else {
+        document.getElementById("acceptBtn").style.display = "";
+        document.getElementById("rejectBtn").style.display = "";
+      }
+    });
+
+    socket.on("tod-voted", ({ acceptCount, voted, total }) => {
+      document.getElementById("status").textContent =
+        `Chấp nhận: ${acceptCount}/${total} | Đã vote: ${voted}/${total}`;
+    });
+
+    socket.on("tod-result", ({ result }) => {
+      if (result === "accepted") {
+        document.getElementById("status").textContent = "✅ Đa số chấp nhận! Đến lượt tiếp theo...";
+      } else {
+        document.getElementById("status").textContent = "❌ Không đủ chấp nhận, phải trả lời lại!";
+      }
+    });
+
+    socket.on("tod-error", (msg) => {
+      alert("❌ " + msg);
+    });
+
+    socket.on("tod-join-failed", ({ reason }) => {
+      alert(reason || "Không thể vào phòng này!");
+      window.location.href = "/";
+    });
+  </script>
 </body>
 </html>
