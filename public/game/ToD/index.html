@@ -18,7 +18,7 @@
       flex-direction: column;
       align-items: center;
       background-image:
-        url('https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?auto=format&fit=crop&w=800&q=80'),
+        url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80'),
         linear-gradient(135deg, #f8ffae 0%, #43c6ac 100%);
       background-size: cover;
       background-repeat: no-repeat;
@@ -97,6 +97,14 @@
     }
     .choice-btn {
       background: linear-gradient(90deg, #43c6ac 0%, #191654 100%);
+      color: #fff;
+    }
+    .choice-btn.truth {
+      background: linear-gradient(90deg, #a8edea 0%, #fed6e3 100%);
+      color: #222;
+    }
+    .choice-btn.dare {
+      background: linear-gradient(90deg, #f857a6 0%, #ff5858 100%);
       color: #fff;
     }
     .choice-btn:hover, .btn-green:hover, .btn-red:hover, .start-btn:hover {
@@ -183,7 +191,7 @@
       height: 220px;
       left: 50%; top: 50%;
       transform: translate(-50%, -50%);
-      background: url('https://pngimg.com/uploads/table/table_PNG17301.png') no-repeat center/contain;
+      background: url('https://pngimg.com/uploads/table/table_PNG17303.png') no-repeat center/contain;
       border-radius: 50% / 40%;
       box-shadow: 0 8px 32px #0003, 0 0 0 12px #fff8;
       z-index: 1;
@@ -249,6 +257,19 @@
       #table { width: 180px; height: 90px; }
       .player-avatar { width: 32px; height: 32px; font-size: 1.1rem; }
       .card { width: 90vw; min-width: 180px; height: 140px; font-size: 1rem; }
+    }
+
+    .question-mark {
+      position: absolute;
+      top: -28px; left: 50%; transform: translateX(-50%);
+      font-size: 2rem;
+      color: #ffb347;
+      animation: bounce 1s infinite;
+      z-index: 11;
+    }
+    @keyframes bounce {
+      0%, 100% { transform: translateX(-50%) translateY(0);}
+      50% { transform: translateX(-50%) translateY(-10px);}
     }
   </style>
 </head>
@@ -327,7 +348,7 @@
       const n = players.length;
       const isMobile = window.innerWidth <= 600;
       const a = isMobile ? 70 : 180; // trục bán kính ngang
-      const b = isMobile ? 35 : 80;  // trục bán kính dọc (tăng lên cho bàn tròn)
+      const b = isMobile ? 35 : 80;  // trục bán kính dọc
       const centerX = isMobile ? 90 : 210;
       const centerY = isMobile ? 45 : 110;
       players.forEach((p, i) => {
@@ -342,7 +363,7 @@
         div.style.left = x + "px";
         div.style.top = y + "px";
         div.innerHTML = `
-          ${askedName && p.name === askedName ? '<div class="arrow-up"></div>' : ''}
+          ${askedName && p.name === askedName ? '<div class="question-mark">?</div>' : ''}
           <img src="https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(p.name)}" width="${isMobile ? 24 : 36}" height="${isMobile ? 24 : 36}" style="border-radius:50%">
           <span>${p.name}</span>
         `;
@@ -357,7 +378,7 @@
         box-shadow: 0 0 0 4px #ffb34799, 0 2px 8px #0002;
         z-index: 10;
       }
-      .arrow-up {
+      .question-mark {
         width: 0; height: 0;
         border-left: 12px solid transparent;
         border-right: 12px solid transparent;
@@ -389,7 +410,7 @@
           btn.innerHTML = idx === 0
             ? '👼 Sự thật'
             : '😈 Thử thách';
-          btn.className = "choice-btn";
+          btn.className = "choice-btn " + (idx === 0 ? "truth" : "dare");
           btn.onclick = () => socket.emit("tod-choice", {
             roomCode,
             player: playerName,
@@ -472,6 +493,7 @@
     });
 
     socket.on("tod-result", ({ result }) => {
+      card.classList.add("hidden"); // Ẩn lá bài cho tất cả
       if (result === "accepted") {
         document.getElementById("status").textContent = "✅ Đa số chấp nhận! Đến lượt tiếp theo...";
       } else {
