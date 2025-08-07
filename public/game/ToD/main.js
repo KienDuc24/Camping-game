@@ -239,3 +239,5 @@ questionMini.onclick = () => {
   questionPopup.classList.remove("hidden");
   questionMini.classList.add("hidden");
 };
+
+const total = Math.max(1, room.players.length - 1); // Đảm bảo luôn có ít nhất 1 người vote
