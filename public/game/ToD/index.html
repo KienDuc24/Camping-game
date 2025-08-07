@@ -485,8 +485,9 @@
       lastQuestion = "";
       lastType = "";
       questionShrink = false;
+      voteAccept = 0;    // <-- reset số vote đồng thuận
+      voteTotal = 0;     // <-- reset tổng số vote
       renderQuestionBar();
-      // Ẩn vote khi sang lượt mới
       document.querySelector(".card-actions").style.display = "none";
 
       // Không hiện spinner nữa
