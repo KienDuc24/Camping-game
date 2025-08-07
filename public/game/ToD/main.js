@@ -235,7 +235,6 @@ questionMini.onclick = () => {
   questionMini.classList.add("hidden");
 };
 
-const total = Math.max(1, room.players.length - 1);
 socket.on("tod-voted", ({ acceptCount, voted, total }) => {
   document.getElementById("status").textContent =
     `Đã vote: ${voted}/${total} | Chấp thuận: ${acceptCount}`;
