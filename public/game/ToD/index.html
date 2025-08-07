@@ -60,6 +60,10 @@
     });
 
     socket.on("tod-joined", ({ players, host }) => {
+      const startBtn = document.getElementById("startRoundBtn");
+      startBtn.style.display = playerName === host ? "inline-block" : "none";
+
+
       console.log(`📥 Server nhận tod-join: roomCode=${roomCode}, player=${player}, rooms=${JSON.stringify(rooms[roomCode])}`);
         if (!rooms[roomCode]) return;
       currentHost = host; // Update the host variable from server data
@@ -78,15 +82,11 @@
       const isHost = playerName === currentHost; // Compare with host from server
 
       if (isHost) {
-        const btn = document.getElementById("startRoundBtn");
-        btn.style.display = "inline-block";
+
         btn.onclick = () => {
           console.log("🚀 Host starts the round");
           socket.emit("tod-start-round", { roomCode });
         };
-      } else {
-        // Đảm bảo nút bị ẩn nếu không phải host
-        document.getElementById("startRoundBtn").style.display = "none";
       }
     });
 
