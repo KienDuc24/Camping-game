@@ -364,6 +364,7 @@
 
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
   <script>
+    let voteAccept = 0, voteTotal = 0;
     const socket = io("https://camping-game-production.up.railway.app", {
       transports: ["websocket"],
       secure: true
@@ -444,7 +445,6 @@
     function renderQuestionBar() {
       const bar = document.getElementById("question-bar");
       bar.innerHTML = "";
-      // Ẩn vote khi không có câu hỏi
       document.querySelector(".card-actions").style.display = "none";
       if (!lastQuestion) return;
       const div = document.createElement("div");
@@ -454,22 +454,21 @@
         if (e.target.classList.contains("shrink-btn")) return;
         questionShrink = !questionShrink;
         renderQuestionBar();
-        // Hiện vote khi phóng to, ẩn vote khi thu nhỏ
         document.querySelector(".card-actions").style.display = questionShrink ? "none" : "";
       };
-      // Icon thiên sứ/cầu nguyện hoặc ác quỷ
       let icon = lastType === "truth"
         ? `<span class="q-icon">😇</span>`
         : `<span class="q-icon">😈</span>`;
-      // Nút thu nhỏ/phóng to
       let shrinkBtn = `<button class="shrink-btn" tabindex="-1" onclick="event.stopPropagation();questionShrink=!questionShrink;renderQuestionBar();document.querySelector('.card-actions').style.display=questionShrink?'none':'';">${questionShrink ? "🔍" : "➖"}</button>`;
+      let voteHtml = (voteTotal > 0 && !questionShrink)
+        ? `<span style="margin-left:12px;font-size:1.02em;color:#e67e22;background:#fffbe6;border-radius:6px;padding:2px 10px;box-shadow:0 1px 4px #0001;">👍 ${voteAccept}/${voteTotal}</span>`
+        : "";
       if (questionShrink) {
         div.innerHTML = icon;
       } else {
-        div.innerHTML = icon + lastQuestion + shrinkBtn;
+        div.innerHTML = icon + lastQuestion + shrinkBtn + voteHtml;
       }
       bar.appendChild(div);
-      // Hiện vote khi phóng to, ẩn vote khi thu nhỏ
       document.querySelector(".card-actions").style.display = questionShrink ? "none" : "";
     }
 
@@ -591,6 +590,9 @@
       const voteInfo = document.getElementById("vote-info");
       voteInfo.textContent = `Chấp thuận: ${acceptCount}/${total} | Đã vote: ${voted}/${total}`;
       voteInfo.style.display = "";
+      voteAccept = acceptCount;
+      voteTotal = total;
+      renderQuestionBar(); // cập nhật số vote trên popup
     });
 
     socket.on("tod-result", ({ result }) => {
