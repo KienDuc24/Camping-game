@@ -85,6 +85,11 @@ socket.on("tod-your-turn", ({ player }) => {
   currentAsked = null;
   hasChosen = false;
 
+  // Reset popup/câu hỏi khi đến lượt mới
+  hideQuestionPopup();
+  votePopup.classList.add("hidden");
+  card.classList.add("hidden");
+
   if (!isYou) {
     document.getElementById("controls").innerHTML = `<div class="spinner"></div>`;
   } else {
@@ -175,6 +180,8 @@ socket.on("tod-question", ({ player, choice, question }) => {
   } else {
     votePopup.classList.remove("hidden");
   }
+  // Reset trạng thái chọn
+  hasChosen = false;
 });
 
 // Khi đã vote xong hoặc hết lượt thì ẩn popup vote và câu hỏi
@@ -182,6 +189,8 @@ socket.on("tod-result", ({ result }) => {
   hideQuestionPopup();
   card.classList.add("hidden");
   votePopup.classList.add("hidden");
+  // Reset trạng thái chọn
+  hasChosen = false;
   if (result === "accepted") {
     document.getElementById("status").textContent = "✅ Đa số chấp nhận! Đến lượt tiếp theo...";
   } else {
