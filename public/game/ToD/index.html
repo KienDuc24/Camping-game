@@ -5,36 +5,114 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Truth or Dare</title>
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+  <link href="https://fonts.googleapis.com/css?family=Quicksand:700&display=swap" rel="stylesheet">
   <style>
-    body { font-family: sans-serif; text-align: center; padding: 20px; background: #f8f9fa; }
-    h1 { margin-bottom: 10px; }
-    #status { margin: 20px 0; font-size: 1.2rem; }
-    ul { list-style: none; padding: 0; margin: 0 0 20px; }
-    li { padding: 6px 0; }
-    button {
-      padding: 10px 16px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      margin: 6px;
-      font-size: 1rem;
+    body {
+      font-family: 'Quicksand', Arial, sans-serif;
+      background: linear-gradient(135deg, #f8ffae 0%, #43c6ac 100%);
+      min-height: 100vh;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
-    .start-btn { background: #28a745; color: white; }
-    .choice-btn { background: #007bff; color: white; }
-    .vote-btn { background: #ffc107; color: black; }
-
-    /* Spinner CSS */
+    h1 {
+      margin: 24px 0 10px 0;
+      font-size: 2.2rem;
+      color: #333;
+      letter-spacing: 1px;
+      text-shadow: 1px 1px 0 #fff, 2px 2px 8px #43c6ac44;
+    }
+    #status {
+      margin: 18px 0 10px 0;
+      font-size: 1.15rem;
+      color: #222;
+      min-height: 32px;
+      font-weight: 600;
+      background: #fff8;
+      border-radius: 8px;
+      padding: 8px 16px;
+      box-shadow: 0 2px 8px #0001;
+      transition: background 0.3s;
+    }
+    ul#playerList {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 18px 0;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+    }
+    ul#playerList li {
+      background: #fff;
+      border-radius: 6px;
+      padding: 6px 14px;
+      margin: 0 2px;
+      font-weight: 500;
+      color: #333;
+      box-shadow: 0 1px 4px #0001;
+      font-size: 1rem;
+      transition: background 0.2s;
+    }
+    #controls {
+      margin: 18px 0 0 0;
+      min-height: 48px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+    }
+    button {
+      padding: 12px 22px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin: 6px 4px;
+      font-size: 1.1rem;
+      font-family: inherit;
+      font-weight: 700;
+      box-shadow: 0 2px 8px #0002;
+      transition: background 0.2s, transform 0.1s;
+    }
+    button:active {
+      transform: scale(0.97);
+    }
+    .btn-green, .start-btn {
+      background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%);
+      color: #222;
+    }
+    .btn-red {
+      background: linear-gradient(90deg, #ff5858 0%, #f09819 100%);
+      color: #fff;
+    }
+    .choice-btn {
+      background: linear-gradient(90deg, #43c6ac 0%, #191654 100%);
+      color: #fff;
+    }
+    .choice-btn:hover, .btn-green:hover, .btn-red:hover, .start-btn:hover {
+      filter: brightness(1.08);
+      box-shadow: 0 4px 16px #0002;
+    }
     .spinner {
       margin: 24px auto;
-      width: 60px;
-      height: 60px;
-      border: 8px solid #eee;
-      border-top: 8px solid #007bff;
+      width: 48px;
+      height: 48px;
+      border: 6px solid #eee;
+      border-top: 6px solid #43c6ac;
       border-radius: 50%;
       animation: spin 1s linear infinite;
     }
-    @keyframes spin {
-      100% { transform: rotate(360deg); }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      h1 { font-size: 1.4rem; }
+      #status { font-size: 1rem; padding: 6px 8px; }
+      ul#playerList li { font-size: 0.95rem; padding: 5px 8px; }
+      button { font-size: 1rem; padding: 10px 12px; }
+      #controls { gap: 6px; }
     }
   </style>
 </head>
@@ -89,7 +167,7 @@
       console.log("-----------------------------");
 
       document.getElementById("playerList").innerHTML = players
-        .map(p => `<li>${p.order ? p.order + '. ' : ''}${p.name}</li>`)
+        .map((p, i) => `<li>${i === 0 ? "🎲 " : "👤 "}${p.name}</li>`)
         .join("");
       document.getElementById("status").textContent = `Người chơi: ${players.length}`;
 
@@ -104,9 +182,10 @@
 
     socket.on("tod-your-turn", ({ player }) => {
       const isYou = player === playerName;
-      document.getElementById("status").textContent = isYou
-        ? "👉 Đến lượt bạn! Chọn Truth hoặc Dare"
-        : `⏳ ${player} đang chọn Truth hoặc Dare...`;
+      document.getElementById("status").textContent =
+        isYou
+          ? "👉 Đến lượt bạn! Chọn Truth hoặc Dare"
+          : `⏳ ${player} đang chọn Truth hoặc Dare...`;
 
       const controls = document.getElementById("controls");
       controls.innerHTML = "";
@@ -153,9 +232,8 @@
       }
     });
 
-    socket.on("tod-voted", ({ player, vote, acceptCount, voted, total }) => {
+    socket.on("tod-voted", ({ acceptCount, voted, total }) => {
       document.getElementById("status").textContent =
-        `${player} đã vote: ${vote === "accept" ? "Chấp nhận" : "Không đồng ý"} | ` +
         `Chấp nhận: ${acceptCount}/${total} | Đã vote: ${voted}/${total}`;
     });
 
