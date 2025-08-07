@@ -163,6 +163,9 @@
       width: 340px;
       height: 340px;
       margin: 0 auto 18px auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
     #table {
       position: absolute;
@@ -170,9 +173,10 @@
       height: 220px;
       left: 50%; top: 50%;
       transform: translate(-50%, -50%);
-      background: #fff9;
+      background: radial-gradient(circle at 60% 40%, #fff 60%, #43c6ac22 100%);
       border-radius: 50%;
-      border: 4px solid #43c6ac;
+      border: 6px solid #43c6ac;
+      box-shadow: 0 8px 32px #43c6ac33;
       z-index: 1;
     }
     #table th, #table td {
@@ -221,8 +225,8 @@
       ul#playerList li { font-size: 0.95rem; padding: 5px 8px; }
       button { font-size: 1rem; padding: 10px 12px; }
       #controls { gap: 6px; }
-      #table-area { width: 220px; height: 220px; }
-      #table { width: 120px; height: 120px; }
+      #table-area { width: 180px; height: 180px; }
+      #table { width: 90px; height: 90px; }
       .player-avatar { width: 32px; height: 32px; font-size: 1.1rem; }
     }
   </style>
@@ -300,11 +304,14 @@
       const table = document.getElementById("table-area");
       table.querySelectorAll(".player-avatar").forEach(e => e.remove());
       const n = players.length;
-      const R = 140;
+      // Responsive bán kính
+      const isMobile = window.innerWidth <= 600;
+      const R = isMobile ? 60 : 140;
+      const center = isMobile ? 90 : 170;
       players.forEach((p, i) => {
         const angle = (2 * Math.PI * i) / n - Math.PI / 2;
-        const x = 170 + R * Math.cos(angle) - 27;
-        const y = 170 + R * Math.sin(angle) - 27;
+        const x = center + R * Math.cos(angle) - (isMobile ? 16 : 27);
+        const y = center + R * Math.sin(angle) - (isMobile ? 16 : 27);
         const div = document.createElement("div");
         div.className = "player-avatar" +
           (i === 0 ? " host" : "") +
@@ -314,7 +321,7 @@
         div.style.top = y + "px";
         div.innerHTML = `
           ${askedName && p.name === askedName ? '<div class="arrow-up"></div>' : ''}
-          <img src="https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(p.name)}" width="36" height="36" style="border-radius:50%">
+          <img src="https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(p.name)}" width="${isMobile ? 24 : 36}" height="${isMobile ? 24 : 36}" style="border-radius:50%">
           <span>${p.name}</span>
         `;
         table.appendChild(div);
@@ -421,10 +428,15 @@
         Array.from(document.querySelectorAll("#playerList li")).map(li => ({ name: li.textContent.replace(/^(\W+\s)?/, "") })),
         currentAsked
       );
-      if (playerName !== player) {
-        showCard(`${player} chọn ${choice.toUpperCase()}: ${question}`);
+      showCard(`${player} chọn ${choice.toUpperCase()}: ${question}`);
+
+      // Ẩn nút vote nếu là người bị hỏi
+      if (playerName === player) {
+        document.getElementById("acceptBtn").style.display = "none";
+        document.getElementById("rejectBtn").style.display = "none";
       } else {
-        card.classList.add("hidden");
+        document.getElementById("acceptBtn").style.display = "";
+        document.getElementById("rejectBtn").style.display = "";
       }
     });
 
